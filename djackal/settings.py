@@ -4,6 +4,11 @@ from django.conf import settings
 from django.test.signals import setting_changed
 
 DEFAULTS = {
+    'PAGE_SIZE': 10,
+    'MAX_PAGE_SIZE': 100,
+
+    'DEFAULT_PAGINATION_CLASS': 'djackal.pagination.PageNumberPagination',
+
     'DEFAULT_NONE_VALUES': ([], {}, '', None),
 
     'PARAM_FUNC_CLASSES': [
@@ -13,6 +18,7 @@ DEFAULTS = {
 
 IMPORT_STRINGS = [
     'PARAM_FUNC_CLASSES',
+    'DEFAULT_PAGINATION_CLASS',
 ]
 
 
