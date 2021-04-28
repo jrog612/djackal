@@ -4,9 +4,13 @@ from django.conf import settings
 from django.test.signals import setting_changed
 
 DEFAULTS = {
+    'PARAM_FUNC_CLASSES': [
+        'djackal.param_funcs.DefaultParamFunc'
+    ],
 }
 
 IMPORT_STRINGS = [
+    'PARAM_FUNC_CLASSES',
 ]
 
 
