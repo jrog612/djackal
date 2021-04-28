@@ -4,6 +4,8 @@ from django.conf import settings
 from django.test.signals import setting_changed
 
 DEFAULTS = {
+    'DEFAULT_NONE_VALUES': ([], {}, '', None),
+
     'PARAM_FUNC_CLASSES': [
         'djackal.param_funcs.DefaultParamFunc'
     ],
