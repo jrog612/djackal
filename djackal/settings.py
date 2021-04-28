@@ -13,6 +13,8 @@ DEFAULTS = {
 
     'DEFAULT_NONE_VALUES': ([], {}, '', None),
 
+    'INITIALIZER_CLASSES': (),
+
     'PARAM_FUNC_CLASSES': [
         'djackal.param_funcs.DefaultParamFunc'
     ],
@@ -22,6 +24,7 @@ IMPORT_STRINGS = [
     'PARAM_FUNC_CLASSES',
     'DEFAULT_PAGINATION_CLASS',
     'EXCEPTION_HANDLER',
+    'INITIALIZER_CLASSES',
 ]
 
 
