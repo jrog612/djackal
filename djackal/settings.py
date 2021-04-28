@@ -9,6 +9,8 @@ DEFAULTS = {
 
     'DEFAULT_PAGINATION_CLASS': 'djackal.pagination.PageNumberPagination',
 
+    'EXCEPTION_HANDLER': 'djackal.exceptions.default_exception_handler',
+
     'DEFAULT_NONE_VALUES': ([], {}, '', None),
 
     'PARAM_FUNC_CLASSES': [
@@ -19,6 +21,7 @@ DEFAULTS = {
 IMPORT_STRINGS = [
     'PARAM_FUNC_CLASSES',
     'DEFAULT_PAGINATION_CLASS',
+    'EXCEPTION_HANDLER',
 ]
 
 
