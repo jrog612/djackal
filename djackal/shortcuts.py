@@ -1,5 +1,4 @@
 from django.apps import apps
-from django.db import models
 from django.db.models import Q
 from django.shortcuts import _get_queryset
 
@@ -42,4 +41,3 @@ def gen_q(key, *filter_keywords):
     for q in filter_keywords:
         q_object |= Q(**{q: key})
     return q_object
-
