@@ -1,20 +1,14 @@
-from django.core.management import BaseCommand, CommandError
+from django.core.management import BaseCommand
 
-from djackal.initializer import Initializer
 from djackal.settings import djackal_settings
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        initializers = djackal_settings.INITIALIZER_CLASSES
-        if not initializers:
+        initializer = djackal_settings.INITIALIZER_CLASSE
+        if not initializer:
             print('No initializers')
 
         print('Start initializing')
-        for i in initializers:
-            if not issubclass(i, Initializer):
-                raise CommandError(
-                    '{} is not subclass of Initializer.'.format(i.__name__))
-            initializer = i()
-            initializer.run()
+        initializer.run()
         print('Initialing done.')

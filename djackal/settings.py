@@ -15,7 +15,7 @@ DEFAULTS = {
 
     'DEFAULT_NONE_VALUES': ([], {}, '', None),
 
-    'INITIALIZER_CLASSES': (),
+    'INITIALIZER': None,
 
     'PARAM_FUNC_CLASSES': [
         default_param_func,
@@ -26,7 +26,7 @@ IMPORT_STRINGS = [
     'PARAM_FUNC_CLASSES',
     'DEFAULT_PAGINATION_CLASS',
     'EXCEPTION_HANDLER',
-    'INITIALIZER_CLASSES',
+    'INITIALIZER',
 ]
 
 
