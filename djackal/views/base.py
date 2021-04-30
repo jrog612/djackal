@@ -53,9 +53,6 @@ class BaseDjackalAPIView(APIView):
         pass
 
     def pre_method_call(self, request, *args, **kwargs):
-        """
-        This will call before method run. Likes get, post, patch...
-        """
         pass
 
     def post_check_object_permissions(self, request, obj):
@@ -65,9 +62,6 @@ class BaseDjackalAPIView(APIView):
         pass
 
     def post_method_call(self, request, response, *args, **kwargs):
-        """
-        This will call after method run. Likes get, post, patch...
-        """
         pass
 
     def get_inspector(self):
@@ -252,9 +246,6 @@ class DjackalAPIView(BaseDjackalAPIView):
         ser = klass(instance, many=many, context=context)
         return ser
 
-    def get_user_field(self):
-        return self.user_field
-
     def get_object(self, queryset=None):
         if queryset is None:
             queryset = self.get_queryset()
@@ -306,6 +297,9 @@ class DjackalAPIView(BaseDjackalAPIView):
             queryset = queryset.filter(**{user_field: self.request.user})
 
         return queryset
+
+    def get_user_field(self):
+        return self.user_field
 
     def binding_user(self):
         return self.request.user
