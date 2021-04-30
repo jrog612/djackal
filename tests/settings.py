@@ -10,8 +10,8 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.auth',
     'rest_framework',
+    'djackal.storage',
     'djackal',
-    'djackal.djadis',
     'tests',
 )
 

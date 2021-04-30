@@ -9,7 +9,7 @@ class Initializer:
 
     def wrapper(self, func, key, finish_message=None, skip_message=None, bind_self=False, **options):
         def inner():
-            djadis_model = get_model('djadis.Djadis')
+            djadis_model = get_model('storage.Storage')
             if not djadis_model.get('{}_init'.format(key), False):
                 result = func(self) if bind_self else func()
                 djadis_model.set('{}_init'.format(key), True)

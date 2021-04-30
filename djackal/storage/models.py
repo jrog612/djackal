@@ -3,8 +3,8 @@ from django.db import models
 from djackal.shortcuts import get_object_or
 
 
-class Djadis(models.Model):
-    key = models.CharField(primary_key=True, unique=True, max_length=150)
+class Storage(models.Model):
+    key = models.CharField(primary_key=True, max_length=150)
     value = models.TextField()
 
     @classmethod
