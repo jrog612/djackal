@@ -1,11 +1,11 @@
 from django.core.management import BaseCommand
 
-from djackal.settings import djackal_settings
+from djackal.loaders import initializer_loader
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        initializer = djackal_settings.INITIALIZER_CLASSE
+        initializer = initializer_loader()
         if not initializer:
             print('No initializers')
 

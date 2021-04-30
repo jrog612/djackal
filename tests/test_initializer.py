@@ -2,6 +2,7 @@ from django.test import override_settings
 
 from djackal.djadis.models import Djadis
 from djackal.initializer import Initializer
+from djackal.loaders import initializer_loader
 from djackal.settings import djackal_settings
 from djackal.tests import DjackalTestCase
 
@@ -28,7 +29,7 @@ class InitializerTest(DjackalTestCase):
 
     def test_initializer_load(self):
         with override_settings(DJACKAL={'INITIALIZER': 'tests.test_initializer.initializer'}):
-            assert djackal_settings.INITIALIZER is initializer
+            assert initializer_loader() is initializer
 
     def test_initializer_run(self):
         initializer.run()
