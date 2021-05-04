@@ -25,7 +25,7 @@ class DjackalQueryFilter:
             'skills': 'django,python',
             'status[]': [1, 2, 3],
         }
-        f = JackalQueryFilter(User.objects.all(), params)
+        f = DjackalQueryFilter(User.objects.all(), params)
 
         queryset = f.filter_map({
             'name': 'name__contains',
@@ -81,7 +81,7 @@ class DjackalQueryFilter:
             'search_keyword': 'Yongjin',
             'search_type': 'name',
         }
-        f = JackalQueryFilter(User.objects.all(), params)
+        f = DjackalQueryFilter(User.objects.all(), params)
 
         queryset = f.search({
             'all': ('name__contains', 'job__contains', 'city__contains),
@@ -108,7 +108,7 @@ class DjackalQueryFilter:
 
     def extra(self, **extra_kwargs):
         """
-        f = JackalQueryFilter(User.objects.all(), {})
+        f = DjackalQueryFilter(User.objects.all(), {})
         queryset = f.extra(age__lte=30, is_active=True).queryset
         """
 
@@ -121,7 +121,7 @@ class DjackalQueryFilter:
         params = {
             'ordering': 'name,-age',
         }
-        f = JackalQueryFilter(User.objects.all(), params)
+        f = DjackalQueryFilter(User.objects.all(), params)
 
         queryset = f.ordering().queryset
         """
@@ -135,7 +135,7 @@ class DjackalQueryFilter:
 
     def get(self, raise_404=False, **kwargs):
         """
-        f = JackalQueryFilter(User.objects.all(), {})
+        f = DjackalQueryFilter(User.objects.all(), {})
         user = f.get(id=5)
         """
         queryset = self.queryset

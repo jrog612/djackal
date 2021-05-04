@@ -203,14 +203,14 @@ class DjackalAPIView(BaseDjackalAPIView):
             return self.queryset
         elif self.model is not None:
             return self.model.objects.all()
-        raise exceptions.DjackalAPIException('JackalAPIView required model or queryset')
+        raise exceptions.DjackalAPIException('DjackalAPIView required model or queryset')
 
     def get_model(self):
         if self.model is not None:
             return self.model
         elif self.queryset is not None:
             return self.queryset.model
-        raise exceptions.DjackalAPIException('JackalAPIView required model or queryset')
+        raise exceptions.DjackalAPIException('DjackalAPIView required model or queryset')
 
     def get_lookup_map(self, **additional):
         d = self.lookup_map or dict()
