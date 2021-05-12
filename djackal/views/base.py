@@ -198,19 +198,25 @@ class DjackalAPIView(BaseDjackalAPIView):
         }
 
     def get_queryset(self):
+        assert self.queryset is not None or self.model is not None, (
+            '{} should include a `queryset` or `model` attribute'
+            'or override the get_queryset() method'.format(self.__class__.__name__)
+        )
         if self.queryset is not None:
             self.queryset = self.queryset.all()
             return self.queryset
-        elif self.model is not None:
+        else:
             return self.model.objects.all()
-        raise exceptions.DjackalAPIException('DjackalAPIView required model or queryset')
 
     def get_model(self):
         if self.model is not None:
             return self.model
-        elif self.queryset is not None:
-            return self.queryset.model
-        raise exceptions.DjackalAPIException('DjackalAPIView required model or queryset')
+        queryset = self.get_queryset()
+        assert self.queryset is not None, (
+            '{} should include a `model` or `queryset` attribute'
+            'or override the get_model() method'.format(self.__class__.__name__)
+        )
+        return queryset.model
 
     def get_lookup_map(self, **additional):
         d = self.lookup_map or dict()

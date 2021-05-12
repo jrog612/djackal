@@ -4,7 +4,7 @@ from rest_framework.response import Response
 
 class DjackalAPIException(APIException):
     default_message = ''
-    status_code = None
+    status_code = 500
 
     def __str__(self):
         return self.__class__.__name__
