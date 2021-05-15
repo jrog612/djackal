@@ -1,7 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from djackal import exceptions
 from djackal.filters import DjackalQueryFilter
 from djackal.inspectors import Inspector
 from djackal.settings import djackal_settings
@@ -151,6 +150,7 @@ class DjackalAPIView(BaseDjackalAPIView):
 
     lookup_map = {}
     filter_map = {}
+    bind_kwargs_map = {}
     search_dict = {}
     extra_kwargs = {}
 
@@ -233,6 +233,13 @@ class DjackalAPIView(BaseDjackalAPIView):
     def get_extra_kwargs(self, **additional):
         d = self.extra_kwargs or dict()
         return {**d, **additional}
+
+    def get_bind_kwargs_map(self, **additional):
+        d = self.bind_kwargs_map or dict()
+        return {**d, **additional}
+
+    def get_bind_kwargs_data(self):
+        return value_mapper(self.get_bind_kwargs_map(), self.kwargs)
 
     def get_query_filter_class(self):
         if self.query_filter_class is None:
