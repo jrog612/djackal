@@ -24,12 +24,17 @@ class ListViewMixin:
 
 
 class CreateViewMixin:
+    def get_create_data(self):
+        data = self.get_inspected_data()
+        data.update(**self.get_bind_kwargs_data())
+        if self.bind_user_field:
+            data[self.bind_user_field] = self.binding_user()
+        return data
+
     def create(self, request, **kwargs):
         model = self.get_model()
-        obj = model(**self.get_inspected_data())
-        if self.bind_user_field:
-            setattr(obj, self.bind_user_field, self.binding_user())
-        obj.save()
+        create_data = self.get_create_data()
+        obj = model.objects.create(**create_data)
         return self.simple_response({'id': obj.id})
 
 
@@ -41,9 +46,17 @@ class DetailViewMixin:
 
 
 class UpdateViewMixin:
+    def get_update_data(self):
+        data = self.get_inspected_data()
+        data.update(**self.get_bind_kwargs_data())
+        if self.bind_user_field:
+            data[self.bind_user_field] = self.binding_user()
+        return data
+
     def update(self, request, **kwargs):
         obj = self.get_object()
-        model_update(obj, **self.get_inspected_data())
+        update_data = self.get_update_data()
+        model_update(obj, **update_data)
         return self.simple_response({'id': obj.id})
 
 
