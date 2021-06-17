@@ -1,10 +1,13 @@
 from djackal.erra import Erra
-from djackal.exceptions import DjackalAPIException, NotFound, Forbidden, BadRequest, InternalServer, ErraException
+from djackal.exceptions import DjackalAPIException, NotFound, Forbidden, BadRequest, InternalServer, ErraException, \
+    Unauthorized, NotAllowed
 from djackal.tests import DjackalAPITestCase
 from djackal.views.base import DjackalAPIView
 
-TEST_FORBIDDEN_CODE = 'TEST_FORBIDDEN'
 TEST_BAD_REQUEST_CODE = 'TEST_BAD_REQUEST'
+TEST_UNAUTHORIZED_CODE = 'TEST_UNAUTHORIZED'
+TEST_FORBIDDEN_CODE = 'TEST_FORBIDDEN'
+TEST_NOT_ALLOWED_CODE = 'TEST_NOT_ALLOWED'
 TEST_INTERNAL_SERVER_CODE = 'TEST_INTERNAL_SERVER'
 
 TEST_ERRA = Erra('TEST_ERRA', 'test_erra_message')
@@ -20,10 +23,14 @@ class TestExceptionAPI(DjackalAPIView):
 
         if kind == 'NotFound':
             raise NotFound(test=True)
-        elif kind == 'Forbidden':
-            raise Forbidden(code=TEST_FORBIDDEN_CODE, test=True)
         elif kind == 'BadRequest':
             raise BadRequest(code=TEST_BAD_REQUEST_CODE, test=True)
+        elif kind == 'Unauthorized':
+            raise Unauthorized(code=TEST_UNAUTHORIZED_CODE, test=True)
+        elif kind == 'Forbidden':
+            raise Forbidden(code=TEST_FORBIDDEN_CODE, test=True)
+        elif kind == 'NotAllowed':
+            raise NotAllowed(code=TEST_NOT_ALLOWED_CODE, test=True)
         elif kind == 'InternalServer':
             raise InternalServer(code=TEST_INTERNAL_SERVER_CODE, test=True)
         elif kind == 'Erra':
@@ -38,6 +45,13 @@ class ExceptionTest(DjackalAPITestCase):
         response = self.client.get('/exception')
         self.assertStatusCode(501, response)
 
+    def _check_sub_erra_exception(self, kind, code, status_code):
+        response = self.client.post('/exception', {'kind': kind})
+        self.assertStatusCode(status_code, response)
+        result = response.json()
+        self.assertEqual(result['test'], True)
+        self.assertEqual(result['code'], code)
+
     def test_exception_response(self):
         response = self.client.post('/exception', {'kind': 'NotFound'})
         self.assertStatusCode(404, response)
@@ -45,23 +59,10 @@ class ExceptionTest(DjackalAPITestCase):
         self.assertEqual(result['test'], True)
         self.assertEqual(result['code'], 'NOT_FOUND')
 
-        response = self.client.post('/exception', {'kind': 'Forbidden'})
-        self.assertStatusCode(403, response)
-        result = response.json()
-        self.assertEqual(result['test'], True)
-        self.assertEqual(result['code'], TEST_FORBIDDEN_CODE)
-
-        response = self.client.post('/exception', {'kind': 'BadRequest'})
-        self.assertStatusCode(400, response)
-        result = response.json()
-        self.assertEqual(result['test'], True)
-        self.assertEqual(result['code'], TEST_BAD_REQUEST_CODE)
-
-        response = self.client.post('/exception', {'kind': 'InternalServer'})
-        self.assertStatusCode(500, response)
-        result = response.json()
-        self.assertEqual(result['test'], True)
-        self.assertEqual(result['code'], TEST_INTERNAL_SERVER_CODE)
+        self._check_sub_erra_exception('BadRequest', TEST_BAD_REQUEST_CODE, 400)
+        self._check_sub_erra_exception('Unauthorized', TEST_UNAUTHORIZED_CODE, 401)
+        self._check_sub_erra_exception('Forbidden', TEST_FORBIDDEN_CODE, 403)
+        self._check_sub_erra_exception('NotAllowed', TEST_NOT_ALLOWED_CODE, 405)
 
         response = self.client.post('/exception', {'kind': 'Erra'})
         self.assertStatusCode(500, response)

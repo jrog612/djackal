@@ -47,12 +47,20 @@ class NotFound(DjackalAPIException):
         }
 
 
+class BadRequest(ErraException):
+    status_code = 400
+
+
+class Unauthorized(ErraException):
+    status_code = 401
+
+
 class Forbidden(ErraException):
     status_code = 403
 
 
-class BadRequest(ErraException):
-    status_code = 400
+class NotAllowed(ErraException):
+    status_code = 405
 
 
 class InternalServer(ErraException):
