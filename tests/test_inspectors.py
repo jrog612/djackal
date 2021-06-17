@@ -1,7 +1,6 @@
 from django.test import TestCase
 
-from djackal.exceptions import FieldException
-from djackal.inspectors import Inspector, remove
+from djackal.inspectors import Inspector, remove, InspectorException
 
 
 class TestInspector(TestCase):
@@ -44,10 +43,11 @@ class TestInspector(TestCase):
             'd': {}
         }
 
-        with self.assertRaises(FieldException) as res:
+        with self.assertRaises(InspectorException) as res:
             ins = Inspector(pre_inspect, inspect_map)
             ins.inspected_data
-        self.assertEqual('b', res.exception.field)
+        self.assertEqual('b', res.exception.name)
+        self.assertEqual('required', res.exception.field)
 
         pre_inspect.update({'b': 'a'})
 

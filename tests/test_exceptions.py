@@ -1,24 +1,33 @@
-from djackal.exceptions import FieldException, DjackalAPIException, MessageException, NotFound
+from djackal.erra import Erra
+from djackal.exceptions import DjackalAPIException, NotFound, Forbidden, BadRequest, InternalServer, ErraException
 from djackal.tests import DjackalAPITestCase
 from djackal.views.base import DjackalAPIView
-from tests.models import TestModel
+
+TEST_FORBIDDEN_CODE = 'TEST_FORBIDDEN'
+TEST_BAD_REQUEST_CODE = 'TEST_BAD_REQUEST'
+TEST_INTERNAL_SERVER_CODE = 'TEST_INTERNAL_SERVER'
+
+TEST_ERRA = Erra('TEST_ERRA', 'test_erra_message')
 
 
 class TestException(DjackalAPIException):
     status_code = 501
-    default_message = 'test_message'
 
 
 class TestExceptionAPI(DjackalAPIView):
     def post(self, request):
         kind = request.data['kind']
 
-        if kind == 'Message':
-            raise MessageException(message=kind, test=True)
-        elif kind == 'Field':
-            raise FieldException(field=kind, message=kind, test=True)
-        elif kind == 'NotFound':
-            raise NotFound(model=TestModel, filters={'kind': kind}, test=True)
+        if kind == 'NotFound':
+            raise NotFound(test=True)
+        elif kind == 'Forbidden':
+            raise Forbidden(code=TEST_FORBIDDEN_CODE, test=True)
+        elif kind == 'BadRequest':
+            raise BadRequest(code=TEST_BAD_REQUEST_CODE, test=True)
+        elif kind == 'InternalServer':
+            raise InternalServer(code=TEST_INTERNAL_SERVER_CODE, test=True)
+        elif kind == 'Erra':
+            raise ErraException(erra=TEST_ERRA, test=True)
 
     def get(self, request):
         raise TestException()
@@ -30,24 +39,33 @@ class ExceptionTest(DjackalAPITestCase):
         self.assertStatusCode(501, response)
 
     def test_exception_response(self):
-        response = self.client.post('/exception', {'kind': 'Message'})
-        result = response.json()
-        self.assertEqual(result['test'], True)
-        self.assertEqual(result['message'], 'Message')
-
-        response = self.client.post('/exception', {'kind': 'Field'})
-        result = response.json()
-        self.assertEqual(result['test'], True)
-        self.assertEqual(result['message'], 'Field')
-        self.assertEqual(result['field'], 'Field')
-
         response = self.client.post('/exception', {'kind': 'NotFound'})
+        self.assertStatusCode(404, response)
         result = response.json()
         self.assertEqual(result['test'], True)
-        self.assertEqual(result['model'], 'TestModel')
-        self.assertEqual(
-            result['message'],
-            NotFound.message_form.format(
-                TestModel.__name__, 'kind=NotFound'
-            )
-        )
+        self.assertEqual(result['code'], 'NOT_FOUND')
+
+        response = self.client.post('/exception', {'kind': 'Forbidden'})
+        self.assertStatusCode(403, response)
+        result = response.json()
+        self.assertEqual(result['test'], True)
+        self.assertEqual(result['code'], TEST_FORBIDDEN_CODE)
+
+        response = self.client.post('/exception', {'kind': 'BadRequest'})
+        self.assertStatusCode(400, response)
+        result = response.json()
+        self.assertEqual(result['test'], True)
+        self.assertEqual(result['code'], TEST_BAD_REQUEST_CODE)
+
+        response = self.client.post('/exception', {'kind': 'InternalServer'})
+        self.assertStatusCode(500, response)
+        result = response.json()
+        self.assertEqual(result['test'], True)
+        self.assertEqual(result['code'], TEST_INTERNAL_SERVER_CODE)
+
+        response = self.client.post('/exception', {'kind': 'Erra'})
+        self.assertStatusCode(500, response)
+        result = response.json()
+        self.assertEqual(result['test'], True)
+        self.assertEqual(result['code'], TEST_ERRA.code)
+        self.assertEqual(result['message'], TEST_ERRA.message)

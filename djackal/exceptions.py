@@ -13,60 +13,50 @@ class DjackalAPIException(APIException):
         return {}
 
 
-class MessageException(DjackalAPIException):
-    default_message = ''
-
-    def __init__(self, message=None, context=None, **kwargs):
-        self.message = message if message is not None else self.default_message
-        self.context = context if context is not None else dict()
-        self.kwargs = kwargs
-
-    def response_data(self):
-        return {'message': self.message, **self.kwargs}
-
-
-class NotFound(MessageException):
-    status_code = 404
-    message_form = 'Can not find {} model instance filtered by \'{}\''
-
-    def __init__(self, model, filters, context=None, **kwargs):
-        self.model = model
-        self.filters = filters
+class ErraException(DjackalAPIException):
+    def __init__(self, erra=None, code=None, message=None, context=None, **kwargs):
+        self.erra = erra
+        self.message = message
+        self.code = code
         self.context = context
         self.kwargs = kwargs
 
-    @property
-    def message(self):
-        filter_condition = ', '.join(['{}={}'.format(key, value) for key, value in self.filters.items()])
-        return self.message_form.format(self.model.__name__, filter_condition)
-
     def response_data(self):
-        return {'message': self.message, 'model': self.model.__name__, **self.kwargs}
+        if self.erra:
+            response = self.erra.response_data(context=self.context)
+        else:
+            response = {'code': self.code, 'message': self.message}
+        response.update(self.kwargs)
+        return response
 
 
-class Forbidden(MessageException):
-    status_code = 403
+class NotFound(DjackalAPIException):
+    status_code = 404
+    default_message = 'Data not found'
 
-
-class BadRequest(MessageException):
-    status_code = 400
-
-
-class FieldException(DjackalAPIException):
-    status_code = 400
-
-    def __init__(self, field, message, context=None, **kwargs):
-        self.field = field
-        self.message = message
+    def __init__(self, message=None, context=None, **kwargs):
+        self.context = context
         self.kwargs = kwargs
-        self.context = context if context is not None else dict()
+        self.message = message or self.default_message
 
     def response_data(self):
         return {
+            'code': 'NOT_FOUND',
             'message': self.message,
-            'field': self.field,
             **self.kwargs
         }
+
+
+class Forbidden(ErraException):
+    status_code = 403
+
+
+class BadRequest(ErraException):
+    status_code = 400
+
+
+class InternalServer(ErraException):
+    status_code = 500
 
 
 def default_exception_handler(exc, context):

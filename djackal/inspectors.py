@@ -1,4 +1,3 @@
-from djackal.exceptions import FieldException
 from djackal.settings import djackal_settings
 
 
@@ -9,11 +8,15 @@ class remove:
     pass
 
 
+class InspectorException(Exception):
+    def __init__(self, name, value, field):
+        self.name = name
+        self.value = value
+        self.field = field
+
+
 class Inspector:
     none_values = None
-    required_exception_class = FieldException
-    required_message = 'value is required'
-
     """
     example of inspector map
 
@@ -73,7 +76,7 @@ class Inspector:
         fields = self.get_required_fields()
         for req in fields:
             if data.get(req) in self.get_none_values():
-                raise self.required_exception_class(field=req, message=self.required_message)
+                raise InspectorException(name=req, value=None, field='required')
         return True
 
     def convert_type(self, data):
@@ -100,7 +103,7 @@ class Inspector:
         for key, validator in fields.items():
             v = validator(value=data.get(key), field_name=key, total_data=data, inspector=self)
             if not v.is_valid():
-                raise v.exception_class(field=key, message=v.invalid_message, context={'value': data.get(key)})
+                raise InspectorException(name=key, value=data.get(key), field='validator')
         return True
 
     def convert_if_null(self, data):
@@ -141,14 +144,11 @@ class BaseValidator:
     """
     You can customize this validator. Please override is_valid function.
     """
-    default_invalid_message = 'Invalid Value'
-    exception_class = FieldException
 
     def __init__(self, value, field_name, **kwargs):
         self.value = value
         self.field_name = field_name
         self.kwargs = kwargs
-        self.invalid_message = self.default_invalid_message
 
     def is_valid(self):
         return True
