@@ -3,7 +3,7 @@ from djackal.settings import djackal_settings
 
 class remove:
     """
-    When if_null is this class, that will removed in value dict.
+    When null is this class, that will removed in value dict.
     """
     pass
 
@@ -22,8 +22,8 @@ class Inspector:
 
     {
         'age': {
-            'type_to': int,
-            'if_null': 18,
+            'type': int,
+            'null': 18,
             'required': true,
             'validator': ValidatorClass,
         },
@@ -40,10 +40,10 @@ class Inspector:
     def get_expected_fields(self):
         return self.map.keys()
 
-    def get_type_change_fields(self):
+    def get_type_fields(self):
         return {
-            key: value.get('type_to') for key, value in self.map.items() if
-            value.get('type_to') is not None
+            key: value.get('type') for key, value in self.map.items() if
+            value.get('type') is not None
         }
 
     def get_validate_fields(self):
@@ -52,16 +52,16 @@ class Inspector:
             value.get('validator') is not None
         }
 
-    def get_if_null_fields(self):
+    def get_null_fields(self):
         return {
-            key: value.get('if_null') for key, value in self.map.items() if
-            value.get('if_null') is not None
+            key: value.get('null') for key, value in self.map.items() if
+            value.get('null') is not None
         }
 
     def get_none_values(self):
         return self.none_values if self.none_values is not None else djackal_settings.DEFAULT_NONE_VALUES
 
-    def expected(self, data):
+    def remove_unexpected_fields(self, data):
         """
         Remove unexpected values.
         """
@@ -69,7 +69,7 @@ class Inspector:
         expected_dict = {key: value for key, value in data.items() if key in fields}
         return expected_dict
 
-    def required(self, data):
+    def check_required(self, data):
         """
         Check required values are not contained or null
         """
@@ -83,7 +83,7 @@ class Inspector:
         """
         Convert type to given function
         """
-        fields = self.get_type_change_fields()
+        fields = self.get_type_fields()
         ret_dict = dict()
 
         for key, value in data.items():
@@ -106,11 +106,11 @@ class Inspector:
                 raise InspectorException(name=key, value=data.get(key), field='validator')
         return True
 
-    def convert_if_null(self, data):
+    def convert_null(self, data):
         """
         If value is none, convert given value of run function.
         """
-        fields = self.get_if_null_fields()
+        fields = self.get_null_fields()
         ret_dict = dict()
 
         for key, value in data.items():
@@ -120,7 +120,7 @@ class Inspector:
                 continue
 
             if fields[key] is remove:
-                # Case - When if_null value is remove class: Remove this key in dict.
+                # Case - When null value is remove class: Remove this key in dict.
                 continue
 
             # Case - value is not exists or contained none values: Add default value.
@@ -132,11 +132,11 @@ class Inspector:
     @property
     def inspected_data(self):
         ins_data = self.target
-        ins_data = self.expected(ins_data)
-        self.required(ins_data)
+        ins_data = self.remove_unexpected_fields(ins_data)
+        self.check_required(ins_data)
         ins_data = self.convert_type(ins_data)
         self.check_validate(ins_data)
-        ins_data = self.convert_if_null(ins_data)
+        ins_data = self.convert_null(ins_data)
         return ins_data
 
 
