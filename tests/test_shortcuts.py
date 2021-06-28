@@ -1,7 +1,7 @@
 from django.test import override_settings
 
 from djackal.exceptions import NotFound
-from djackal.shortcuts import get_object_or_404, get_object_or_None, model_update, get_object_or, get_model
+from djackal.shortcuts import get_object_or_404, get_object_or_None, model_update, get_object_or, get_model, auto_f_key
 from djackal.tests import DjackalTransactionTestCase
 from tests.models import TestModel
 
@@ -44,3 +44,11 @@ class TestShortcuts(DjackalTransactionTestCase):
             model = get_model('TestModel')
             self.assertEqual(TestModel, model)
 
+    def test_auto_f_key(self):
+        tm = TestModel.objects.create()
+
+        self.assertEqual(auto_f_key(test_model=1), {'test_model_id': 1})
+        self.assertEqual(auto_f_key(test_model=tm), {'test_model': tm})
+
+        with self.assertRaises(ValueError):
+            auto_f_key(test_model='TestModel'),

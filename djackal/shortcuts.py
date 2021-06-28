@@ -1,5 +1,5 @@
 from django.apps import apps
-from django.db.models import Q
+from django.db.models import Q, Model
 from django.shortcuts import _get_queryset
 
 from djackal.exceptions import NotFound
@@ -45,3 +45,16 @@ def gen_q(key, *filter_keywords):
     for q in filter_keywords:
         q_object |= Q(**{q: key})
     return q_object
+
+
+def auto_f_key(**kwargs):
+    result = dict()
+
+    for key, value in kwargs.items():
+        if type(value) is int:
+            result['{}_id'.format(key)] = value
+        elif isinstance(value, Model):
+            result[key] = value
+        else:
+            raise ValueError('unknown type: {}'.format(type(value)))
+    return result
