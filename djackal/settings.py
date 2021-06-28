@@ -20,6 +20,9 @@ DEFAULTS = {
     'PARAM_FUNC_CLASSES': [
         default_param_func,
     ],
+
+    'SINGLE_APP': False,
+    'SINGLE_APP_NAME': None,
 }
 
 IMPORT_STRINGS = [

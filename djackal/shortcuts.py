@@ -3,6 +3,7 @@ from django.db.models import Q
 from django.shortcuts import _get_queryset
 
 from djackal.exceptions import NotFound
+from djackal.settings import djackal_settings
 
 
 def get_object_or_None(klass, *args, **kwargs):
@@ -32,8 +33,11 @@ def model_update(instance, **fields):
     return instance
 
 
-def get_model(*args, **kwargs):
-    return apps.get_model(*args, **kwargs)
+def get_model(label, *args, **kwargs):
+    if djackal_settings.SINGLE_APP:
+        if djackal_settings.SINGLE_APP_NAME and len(label.split('.')) == 1:
+            return apps.get_model('{}.{}'.format(djackal_settings.SINGLE_APP_NAME, label))
+    return apps.get_model(label, *args, **kwargs)
 
 
 def gen_q(key, *filter_keywords):

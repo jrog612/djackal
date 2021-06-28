@@ -1,5 +1,7 @@
+from django.test import override_settings
+
 from djackal.exceptions import NotFound
-from djackal.shortcuts import get_object_or_404, get_object_or_None, model_update, get_object_or
+from djackal.shortcuts import get_object_or_404, get_object_or_None, model_update, get_object_or, get_model
 from djackal.tests import DjackalTransactionTestCase
 from tests.models import TestModel
 
@@ -27,3 +29,18 @@ class TestShortcuts(DjackalTransactionTestCase):
 
         self.assertEqual(obj.field_int, 2)
         self.assertEqual(obj.field_char, 'test2')
+
+    def test_get_model(self):
+        model = get_model('tests.TestModel')
+        self.assertEqual(TestModel, model)
+
+        with self.assertRaises(ValueError):
+            get_model('TestModel')
+
+        with override_settings(DJACKAL={
+            'SINGLE_APP': True,
+            'SINGLE_APP_NAME': 'tests'
+        }):
+            model = get_model('TestModel')
+            self.assertEqual(TestModel, model)
+
