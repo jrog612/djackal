@@ -141,6 +141,6 @@ class DjackalQueryFilter:
         queryset = self.queryset
         obj = queryset.filter(**kwargs).first()
         if obj is None and raise_404:
-            raise NotFound()
+            raise NotFound(model=queryset.model)
 
         return obj

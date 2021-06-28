@@ -20,7 +20,7 @@ def get_object_or(klass, this=None, *args, **kwargs):
 def get_object_or_404(model, **fields):
     obj = get_object_or_None(model, **fields)
     if obj is None:
-        raise NotFound()
+        raise NotFound(model=model)
     return obj
 
 
