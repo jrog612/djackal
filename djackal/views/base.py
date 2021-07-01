@@ -298,7 +298,7 @@ class DjackalAPIView(BaseDjackalAPIView):
             **extra_kwargs
         ).ordering(
             self.ordering_key
-        ).queryset.distinct()
+        ).queryset
         return queryset
 
     def get_user_queryset(self, queryset=None):
