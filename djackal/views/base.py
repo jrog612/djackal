@@ -212,7 +212,7 @@ class DjackalAPIView(BaseDjackalAPIView):
         if self.model is not None:
             return self.model
         queryset = self.get_queryset()
-        assert self.queryset is not None, (
+        assert queryset is not None, (
             '{} should include a `model` or `queryset` attribute'
             'or override the get_model() method'.format(self.__class__.__name__)
         )
