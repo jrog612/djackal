@@ -11,7 +11,7 @@ DEFAULTS = {
 
     'DEFAULT_PAGINATION_CLASS': 'djackal.pagination.PageNumberPagination',
 
-    'EXCEPTION_HANDLER': 'djackal.exceptions.default_exception_handler',
+    'EXCEPTION_HANDLER': 'djackal.views.handler.exception_handler',
 
     'DEFAULT_NONE_VALUES': ([], {}, '', None),
 

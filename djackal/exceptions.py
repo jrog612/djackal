@@ -67,8 +67,3 @@ class NotAllowed(ErraException):
 class InternalServer(ErraException):
     status_code = 500
 
-
-def default_exception_handler(exc, context):
-    if isinstance(exc, DjackalAPIException):
-        return Response(exc.response_data(), status=exc.status_code)
-    return None
