@@ -119,9 +119,9 @@ class BaseDjackalAPIView(APIView):
         high jacking exception and handle with default_exception_handler
         """
         self.pre_handle_exception(exc)
-        jackal_handler = self.get_default_exception_handler()
+        djackal_handler = self.get_default_exception_handler()
         context = self.get_exception_handler_context()
-        response = jackal_handler(exc, context)
+        response = djackal_handler(exc, context)
         if response is not None:
             response.exception = True
             return response
