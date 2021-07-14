@@ -31,10 +31,13 @@ class CreateViewMixin:
             data[self.bind_user_field] = self.binding_user()
         return data
 
-    def create(self, request, **kwargs):
+    def create_action(self, data):
         model = self.get_model()
+        return model.objects.create(**data)
+
+    def create(self, request, **kwargs):
         create_data = self.get_create_data()
-        obj = model.objects.create(**create_data)
+        obj = self.create_action(create_data)
         return self.simple_response({'id': obj.id})
 
 
@@ -53,15 +56,21 @@ class UpdateViewMixin:
             data[self.bind_user_field] = self.binding_user()
         return data
 
+    def update_action(self, obj, data):
+        model_update(obj, **data)
+
     def update(self, request, **kwargs):
         obj = self.get_object()
         update_data = self.get_update_data()
-        model_update(obj, **update_data)
+        self.update_action(obj, data=update_data)
         return self.simple_response({'id': obj.id})
 
 
 class DestroyViewMixin:
+    def delete_action(self, obj):
+        obj.delete()
+
     def destroy(self, request, **kwargs):
         obj = self.get_object()
-        obj.delete()
+        self.delete_action(obj)
         return self.simple_response()
