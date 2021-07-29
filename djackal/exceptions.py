@@ -1,19 +1,31 @@
 from rest_framework.exceptions import APIException
-from rest_framework.response import Response
 
 
 class DjackalAPIException(APIException):
     default_message = ''
     status_code = 500
 
+    def __init__(self, message=None):
+        self.message = message
+
     def __str__(self):
-        return self.__class__.__name__
+        return self.message
 
     def response_data(self):
         return {}
 
 
 class ErraException(DjackalAPIException):
+    def __str__(self):
+        return self.get_message()
+
+    def get_message(self):
+        if self.message:
+            return self.message
+        elif self.erra:
+            return self.erra.message
+        return None
+
     def __init__(self, erra=None, code=None, message=None, context=None, **kwargs):
         self.erra = erra
         self.message = message
@@ -66,4 +78,3 @@ class NotAllowed(ErraException):
 
 class InternalServer(ErraException):
     status_code = 500
-
