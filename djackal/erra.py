@@ -1,27 +1,21 @@
-class Erra:
-    def __init__(self, code, message=None):
-        self.code = code
-        self.message = message
+from enum import Enum
 
+
+class Erra(Enum):
     def __str__(self):
-        return self.code
+        return self.name
 
-    def __eq__(self, other):
-        other_type = type(other)
+    @property
+    def message(self):
+        return self.value
 
-        if other_type is str:
-            return self.code == other
-        elif other_type is self.__class__:
-            return self.code == other.code
-        else:
-            raise TypeError('Invalid type: {}'.format(other_type))
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
+    @property
+    def code(self):
+        return self.name
 
     def get_message(self, context=None):
         message = self.message
-        if context and not message:
+        if context and message:
             message = message.format(**context)
         return message
 

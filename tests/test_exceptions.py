@@ -4,13 +4,16 @@ from djackal.exceptions import DjackalAPIException, NotFound, Forbidden, BadRequ
 from djackal.tests import DjackalAPITestCase
 from djackal.views.base import DjackalAPIView
 
+
+class TestErra(Erra):
+    TEST_ERRA = 'test_erra_message'
+
+
 TEST_BAD_REQUEST_CODE = 'TEST_BAD_REQUEST'
 TEST_UNAUTHORIZED_CODE = 'TEST_UNAUTHORIZED'
 TEST_FORBIDDEN_CODE = 'TEST_FORBIDDEN'
 TEST_NOT_ALLOWED_CODE = 'TEST_NOT_ALLOWED'
 TEST_INTERNAL_SERVER_CODE = 'TEST_INTERNAL_SERVER'
-
-TEST_ERRA = Erra('TEST_ERRA', 'test_erra_message')
 
 
 class TestException(DjackalAPIException):
@@ -34,7 +37,7 @@ class TestExceptionAPI(DjackalAPIView):
         elif kind == 'InternalServer':
             raise InternalServer(code=TEST_INTERNAL_SERVER_CODE, test=True)
         elif kind == 'Erra':
-            raise ErraException(erra=TEST_ERRA, test=True)
+            raise ErraException(erra=TestErra.TEST_ERRA, test=True)
 
     def get(self, request):
         raise TestException()
@@ -68,5 +71,5 @@ class ExceptionTest(DjackalAPITestCase):
         self.assertStatusCode(500, response)
         result = response.json()
         self.assertEqual(result['test'], True)
-        self.assertEqual(result['code'], TEST_ERRA.code)
-        self.assertEqual(result['message'], TEST_ERRA.message)
+        self.assertEqual(result['code'], TestErra.TEST_ERRA.code)
+        self.assertEqual(result['message'], TestErra.TEST_ERRA.message)
