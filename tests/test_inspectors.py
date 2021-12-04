@@ -4,15 +4,6 @@ from djackal.inspectors import Inspector, remove, InspectorException
 
 
 class TestInspector(TestCase):
-    def setUp(self):
-        self.pre_inspect = {
-            'integer_field': 15,
-            'string_field': 'string',
-            'boolean_field': False,
-            'unexpected_field': 'uep',
-            'required_field': 'required'
-        }
-
     def test_expected(self):
         pre_inspect = {
             'a': 'a',
@@ -61,31 +52,33 @@ class TestInspector(TestCase):
             'b': '1234',
         }
         inspect_map = {
-            'a': {'type_to': str},
-            'b': {'type_to': int},
+            'a': {'type': str},
+            'b': {'type': int},
         }
 
         ins = Inspector(pre_inspect, inspect_map)
         result = ins.inspected_data
         self.assertEqual({'a': '121', 'b': 1234}, result)
 
-    def test_if_null(self):
+    def test_default(self):
         pre_inspect = {
             'a': '',
             'b': None,
             'c': {},
-            'd': []
+            'd': [],
+            'e': 'value',
         }
         inspect_map = {
-            'a': {'if_null': remove},
-            'b': {'if_null': None},
-            'c': {'if_null': 'default'},
-            'd': {'if_null': 100},
-
+            'a': {'default': remove},
+            'b': {'default': None},
+            'c': {'default': 'default'},
+            'd': {'default': 100},
+            'e': {},
+            'f': {'default': 'NOT_EXISTS_DATA'},
         }
 
         ins = Inspector(pre_inspect, inspect_map)
         result = ins.inspected_data
         self.assertEqual({
-            'b': None, 'c': 'default', 'd': 100
+            'b': None, 'c': 'default', 'd': 100, 'e': 'value', 'f': 'NOT_EXISTS_DATA'
         }, result)

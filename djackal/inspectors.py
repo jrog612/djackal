@@ -23,7 +23,7 @@ class Inspector:
     {
         'age': {
             'type': int,
-            'null': 18,
+            'default': 18,
             'required': true,
             'validator': ValidatorClass,
         },
@@ -52,10 +52,10 @@ class Inspector:
             value.get('validator') is not None
         }
 
-    def get_null_fields(self):
+    def get_default_fields(self):
         return {
-            key: value.get('null') for key, value in self.map.items() if
-            value.get('null') is not None
+            key: value.get('default') for key, value in self.map.items() if
+            value.get('default') is not None
         }
 
     def get_none_values(self):
@@ -71,7 +71,7 @@ class Inspector:
 
     def check_required(self, data):
         """
-        Check required values are not contained or null
+        Check required values are not contained or default
         """
         fields = self.get_required_fields()
         for req in fields:
@@ -106,11 +106,11 @@ class Inspector:
                 raise InspectorException(name=key, value=data.get(key), field='validator')
         return True
 
-    def convert_null(self, data):
+    def convert_default(self, data):
         """
         If value is none, convert given value of run function.
         """
-        fields = self.get_null_fields()
+        fields = self.get_default_fields()
         ret_dict = dict()
 
         for key, value in data.items():
@@ -120,13 +120,17 @@ class Inspector:
                 continue
 
             if fields[key] is remove:
-                # Case - When null value is remove class: Remove this key in dict.
+                # Case - When default value is remove class: Remove this key in dict.
                 continue
 
             # Case - value is not exists or contained none values: Add default value.
             default = fields[key]
             ret_dict[key] = default() if callable(default) else default
 
+        # Case - default given but data not exists: Add default value.
+        for key in fields.keys() - data.keys():
+            default = fields[key]
+            ret_dict[key] = default() if callable(default) else default
         return ret_dict
 
     @property
@@ -136,7 +140,7 @@ class Inspector:
         self.check_required(ins_data)
         ins_data = self.convert_type(ins_data)
         self.check_validate(ins_data)
-        ins_data = self.convert_null(ins_data)
+        ins_data = self.convert_default(ins_data)
         return ins_data
 
 
