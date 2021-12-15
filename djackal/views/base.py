@@ -2,7 +2,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from djackal.filters import DjackalQueryFilter
-from djackal.inspectors import Inspector
 from djackal.settings import djackal_settings
 from djackal.utils import value_mapper
 
@@ -15,9 +14,6 @@ class BaseDjackalAPIView(APIView):
 
     result_root = 'result'
     result_meta = 'meta'
-
-    inspect_map = {}
-    inspector_class = Inspector
 
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -62,22 +58,6 @@ class BaseDjackalAPIView(APIView):
 
     def post_method_call(self, request, response, *args, **kwargs):
         pass
-
-    def get_inspector(self):
-        inspect_map = self.get_cur_inspect_map()
-        if not inspect_map:
-            return None
-        ins_class = self.inspector_class
-        return ins_class(self.request.data, inspect_map)
-
-    def get_inspected_data(self):
-        inspector = self.get_inspector()
-        if inspector is not None:
-            return inspector.inspected_data
-        return dict()
-
-    def get_cur_inspect_map(self):
-        return getattr(self, '{}_inspect_map'.format(self.request.method), self.inspect_map)
 
     def check_permissions(self, request):
         self.pre_check_permissions(request)
@@ -131,18 +111,6 @@ class BaseDjackalAPIView(APIView):
     def has_auth(self):
         return self.request.user is not None and self.request.user.is_authenticated
 
-    def simple_response(self, result=None, status=200, meta=None, headers=None, **kwargs):
-        response_data = {}
-
-        if self.result_root:
-            response_data[self.result_root] = result
-            if self.result_meta:
-                response_data[self.result_meta] = meta or dict()
-        else:
-            response_data = result or dict()
-
-        return Response(response_data, status=status, headers=headers, **kwargs)
-
 
 class DjackalAPIView(BaseDjackalAPIView):
     model = None
@@ -169,6 +137,10 @@ class DjackalAPIView(BaseDjackalAPIView):
 
     pagination_class = djackal_settings.DEFAULT_PAGINATION_CLASS
     paging = False
+
+    inspect_map = None
+    inspect_map_many = False
+    inspector = None
 
     @property
     def paginator(self):
@@ -316,3 +288,37 @@ class DjackalAPIView(BaseDjackalAPIView):
 
     def binding_user(self):
         return self.request.user
+
+    def simple_response(self, result=None, status=200, meta=None, headers=None, **kwargs):
+        response_data = {}
+
+        if self.result_root:
+            response_data[self.result_root] = result
+            if self.result_meta:
+                response_data[self.result_meta] = meta or dict()
+        else:
+            response_data = result or dict()
+
+        return Response(response_data, status=status, headers=headers, **kwargs)
+
+    def get_inspector(self, key=None):
+        inspect_map = self.get_inspect_map(key)
+        if not inspect_map:
+            raise AttributeError('{} instance has no inspect_map.'.format(self.__class__.__name__))
+        inspector = self.inspector or djackal_settings.DEFAULT_INSPECTOR
+        return inspector(inspect_map)
+
+    def get_inspected_data(self, key=None):
+        inspector = self.get_inspector(key=key)
+        return inspector.inspect(self.request.data)
+
+    def get_inspect_map(self, key=None):
+        if not self.inspect_map_many:
+            return self.inspect_map
+        elif key in self.inspect_map:
+            return self.inspect_map[key]
+        elif self.request.method in self.inspect_map:
+            return self.inspect_map[self.request.method]
+        elif 'default' in self.inspect_map:
+            return self.inspect_map['default']
+        return None

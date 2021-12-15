@@ -10,6 +10,7 @@ DEFAULTS = {
     'MAX_PAGE_SIZE': 100,
 
     'DEFAULT_PAGINATION_CLASS': 'djackal.pagination.PageNumberPagination',
+    'DEFAULT_INSPECTOR': 'djackal.inspector.Inspector',
 
     'EXCEPTION_HANDLER': 'djackal.views.handler.exception_handler',
 
@@ -27,7 +28,10 @@ DEFAULTS = {
 
 IMPORT_STRINGS = [
     'PARAM_FUNC_CLASSES',
+
     'DEFAULT_PAGINATION_CLASS',
+    'DEFAULT_INSPECTOR',
+
     'EXCEPTION_HANDLER',
 ]
 
