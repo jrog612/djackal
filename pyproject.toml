@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "djackal"
-version = "0.0.1.dev17"
+version = "0.0.1.dev19"
 description = "extension of Django REST Framework"
 authors = ["jrog <jrog612@gmail.com>"]
 license = "MIT"
