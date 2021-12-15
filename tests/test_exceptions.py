@@ -1,3 +1,6 @@
+import http
+import random
+
 from djackal.erra import Erra
 from djackal.exceptions import DjackalAPIException, NotFound, Forbidden, BadRequest, InternalServer, ErraException, \
     Unauthorized, NotAllowed
@@ -23,6 +26,7 @@ class TestException(DjackalAPIException):
 class TestExceptionAPI(DjackalAPIView):
     def post(self, request):
         kind = request.data['kind']
+        status_code = request.data.get('status_code')
 
         if kind == 'NotFound':
             raise NotFound(test=True)
@@ -37,7 +41,7 @@ class TestExceptionAPI(DjackalAPIView):
         elif kind == 'InternalServer':
             raise InternalServer(code=TEST_INTERNAL_SERVER_CODE, test=True)
         elif kind == 'Erra':
-            raise ErraException(erra=TestErra.TEST_ERRA, test=True)
+            raise ErraException(erra=TestErra.TEST_ERRA, test=True, status_code=status_code)
 
     def get(self, request):
         raise TestException()
@@ -73,3 +77,10 @@ class ExceptionTest(DjackalAPITestCase):
         self.assertEqual(result['test'], True)
         self.assertEqual(result['code'], TestErra.TEST_ERRA.code)
         self.assertEqual(result['message'], TestErra.TEST_ERRA.message)
+
+    def test_exception_status_code(self):
+        response = self.client.post('/exception', {'kind': 'Erra'})
+        self.assertStatusCode(500, response)
+        code = random.choice(list(http.HTTPStatus))
+        response = self.client.post('/exception', {'kind': 'Erra', 'status_code': code.value})
+        self.assertStatusCode(code.value, response)
