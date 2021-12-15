@@ -20,7 +20,7 @@ TEST_INTERNAL_SERVER_CODE = 'TEST_INTERNAL_SERVER'
 
 
 class TestException(DjackalAPIException):
-    status_code = 501
+    default_status_code = 501
 
 
 class TestExceptionAPI(DjackalAPIView):

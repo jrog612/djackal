@@ -53,11 +53,12 @@ class NotFound(DjackalAPIException):
     default_status_code = 404
     default_message = 'Data not found'
 
-    def __init__(self, message=None, context=None, model=None, **kwargs):
+    def __init__(self, message=None, context=None, model=None, status_code=None, **kwargs):
         self.context = context
         self.kwargs = kwargs
         self.model = model
         self.message = message or self.default_message
+        self.status_code = status_code or self.default_status_code
 
     def response_data(self):
         return {
