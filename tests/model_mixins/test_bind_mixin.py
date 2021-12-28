@@ -17,7 +17,15 @@ class TestBindModel2(BindMixin, models.Model):
     b_field = JSONField(default=dict)
 
 
-class SoftDeleteTest(DjackalTransactionTestCase):
+class TestBindModel3(BindMixin, models.Model):
+    bound_fields = {
+        'b_field1': 'DEFAULT_VALUE',
+        'b_field2': list,
+    }
+    extra = JSONField(default=dict)
+
+
+class BindMixinTest(DjackalTransactionTestCase):
     def test_bind_values(self):
         tobj = TestBindModel()
         tobj.b_field1 = 'test_b_field1'
@@ -48,3 +56,11 @@ class SoftDeleteTest(DjackalTransactionTestCase):
         )
         self.assertEqual(tobj.extra, {'b_field1': 'test_b_field1'})
         self.assertEqual(tobj.field_char, 'char_field')
+
+    def test_dictionary_bound_fields(self):
+        tobj = TestBindModel3.objects.create()
+
+        self.assertEqual(tobj.b_field1, tobj.bound_fields['b_field1'])
+        self.assertIs(type(tobj.b_field2), tobj.bound_fields['b_field2'])
+
+        self.assertEqual(tobj.extra['b_field1'], tobj.bound_fields['b_field1'])
