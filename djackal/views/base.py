@@ -9,11 +9,11 @@ from djackal.utils import value_mapper
 class BaseDjackalAPIView(APIView):
     default_permission_classes = ()
     default_authentication_classes = ()
-    permission_classes = ()
-    authentication_classes = ()
 
     result_root = 'result'
     result_meta = 'meta'
+
+    required_auth = False
 
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
