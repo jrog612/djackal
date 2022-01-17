@@ -175,8 +175,8 @@ class DjackalAPIView(BaseDjackalAPIView):
             'or override the get_queryset() method'.format(self.__class__.__name__)
         )
         if self.queryset is not None:
-            self.queryset = self.queryset.all()
-            return self.queryset
+            queryset = self.queryset.all()
+            return queryset
         else:
             return self.model.objects.all()
 
