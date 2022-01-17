@@ -27,13 +27,23 @@ class BaseDjackalAPIView(APIView):
         return djackal_settings.EXCEPTION_HANDLER
 
     def get_authentication_classes(self):
-        return self.default_authentication_classes + self.authentication_classes
+        if self.authentication_classes:
+            return (
+                *self.default_authentication_classes,
+                *self.authentication_classes
+            )
+        return self.default_authentication_classes
 
     def get_authenticators(self):
         return [auth() for auth in self.get_authentication_classes()]
 
     def get_permission_classes(self):
-        return self.default_permission_classes + self.permission_classes
+        if self.permission_classes:
+            return (
+                *self.default_permission_classes,
+                *self.permission_classes
+            )
+        return self.default_permission_classes
 
     def get_permissions(self):
         return [permission() for permission in self.get_permission_classes()]
