@@ -65,13 +65,15 @@ class TestInspector(TestCase):
             'one': 123,
             'two': '1234',
             'three': 'one,two,three',
-            'four': 0
+            'four': 0,
+            'five': None,
         }
         inspect_map = {
             'one': {'convert': str},
             'two': {'convert': int},
             'three': {'convert': _inner_convertor},
             'four': {'convert': bool},
+            'five': {'default': skip, 'convert': int}, # if skip not work, error raised.
         }
         expected = {
             'one': '123',

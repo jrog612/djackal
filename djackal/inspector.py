@@ -50,7 +50,7 @@ class Inspector:
         'list': (tuple, list, set),
         'dict': dict,
     }
-    allow_actions = ['required', 'type', 'convert', 'default', 'unknown']
+    allow_actions = ['required', 'default', 'type', 'convert', 'unknown']
 
     def __init__(self, _map):
         self.inspect_map = _map
