@@ -142,9 +142,6 @@ class DjackalAPIView(BaseDjackalAPIView):
     serializer_class = None
     query_filter_class = DjackalQueryFilter
 
-    page_number_key = 'page_number'
-    page_length_key = 'page_length'
-
     pagination_class = djackal_settings.DEFAULT_PAGINATION_CLASS
     paging = False
 
