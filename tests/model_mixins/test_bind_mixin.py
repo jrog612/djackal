@@ -63,4 +63,9 @@ class BindMixinTest(DjackalTransactionTestCase):
         self.assertEqual(tobj.b_field1, tobj.bound_fields['b_field1'])
         self.assertIs(type(tobj.b_field2), tobj.bound_fields['b_field2'])
 
-        self.assertEqual(tobj.extra['b_field1'], tobj.bound_fields['b_field1'])
+        changed_value = 'CHANGED_VALUE'
+        tobj.b_field1 = changed_value
+        tobj.save()
+        tobj.refresh_from_db()
+
+        self.assertEqual(changed_value, tobj.b_field1)
