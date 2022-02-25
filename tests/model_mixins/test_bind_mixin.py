@@ -39,6 +39,12 @@ class BindMixinTest(DjackalTransactionTestCase):
         with self.assertRaises(AttributeError):
             tobj.b_field3
 
+        tobj.b_field2 = 'test_b_field2'
+        tobj.save()
+        tobj = TestBindModel.objects.get(id=tobj.id)
+        self.assertEqual(tobj.b_field2, 'test_b_field2')
+        self.assertEqual(tobj.extra, {'b_field1': 'test_b_field1', 'b_field2': 'test_b_field2'})
+
     def test_different_bind_field_name(self):
         tobj = TestBindModel2()
         tobj.b_field1 = 'test_b_field1'

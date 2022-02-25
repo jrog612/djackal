@@ -4,6 +4,18 @@ class BindMixin:
 
     def __init__(self, *args, **kwargs):
         self.bind_field_keys = list(self.bound_fields)
+        extra = kwargs.pop('extra', dict())
+        for bound_key in self.bound_fields:
+            if bound_key in kwargs:
+                value = kwargs.pop(bound_key)
+            else:
+                if type(self.bound_fields) is dict:
+                    default_value = self.bound_fields.get(bound_key, None)
+                    value = default_value() if callable(default_value) else default_value
+                else:
+                    continue
+            extra.setdefault(bound_key, value)
+        kwargs['extra'] = extra
         super().__init__(*args, **kwargs)
 
     def __setattr__(self, key, value):
