@@ -1,7 +1,7 @@
 from djackal.exceptions import NotFound
-from djackal.utils import isiter
 from djackal.loaders import param_funcs_loader
 from djackal.shortcuts import gen_q
+from djackal.utils import isiter
 
 
 class DjackalQueryFilter:
@@ -116,20 +116,33 @@ class DjackalQueryFilter:
         self.queryset = queryset.filter(**extra_kwargs)
         return self
 
-    def ordering(self, ordering_key='ordering'):
+    def ordering(self, ordering_map=None, ordering_key='ordering'):
         """
-        params = {
-            'ordering': 'name,-age',
-        }
+        if ordering_map exists:
+            ordering_map = {
+                'name': 'user__name'
+            }
+            params = {
+                'ordering': 'name'
+            }
+        else:
+            params = {
+                'ordering': 'name,-age',
+            }
         f = DjackalQueryFilter(User.objects.all(), params)
 
         queryset = f.ordering().queryset
         """
 
         ordering = self.params.get(ordering_key)
-        if ordering:
+        if not ordering_map:
+            order_value = ordering
+        else:
+            order_value = ordering_map.get(ordering, ordering)
+
+        if order_value:
             queryset = self.queryset
-            order_by = ordering.split(',')
+            order_by = order_value.split(',')
             self.queryset = queryset.order_by(*order_by)
         return self
 

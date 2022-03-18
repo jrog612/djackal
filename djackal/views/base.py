@@ -131,6 +131,7 @@ class DjackalAPIView(BaseDjackalAPIView):
     bind_kwargs_map = {}
     search_dict = {}
     extra_kwargs = {}
+    ordering_map = {}
 
     user_field = ''
     bind_user_field = None
@@ -213,6 +214,10 @@ class DjackalAPIView(BaseDjackalAPIView):
         d = self.extra_kwargs or dict()
         return {**d, **additional}
 
+    def get_ordering_map(self, **additional):
+        d = self.ordering_map or dict()
+        return {**d, **additional}
+
     def get_bind_kwargs_map(self, **additional):
         d = self.bind_kwargs_map or dict()
         return {**d, **additional}
@@ -265,6 +270,7 @@ class DjackalAPIView(BaseDjackalAPIView):
 
         lookup_map = self.get_lookup_map()
         filter_map = self.get_filter_map()
+        ordering_map = self.get_ordering_map()
         search_dict = self.get_search_dict()
         extra_kwargs = self.get_extra_kwargs()
         extra_kwargs.update(value_mapper(lookup_map, self.kwargs))
@@ -272,11 +278,12 @@ class DjackalAPIView(BaseDjackalAPIView):
         queryset = f.search(
             search_dict,
             search_keyword_key=self.search_keyword_key,
-            search_type_key=self.search_type_key
+            search_type_key=self.search_type_key,
         ).filter_map(filter_map).extra(
             **extra_kwargs
         ).ordering(
-            self.ordering_key
+            ordering_map=ordering_map,
+            ordering_key=self.ordering_key,
         ).queryset
         return queryset
 
