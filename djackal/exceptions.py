@@ -22,6 +22,14 @@ class DjackalAPIException(APIException):
 class ErraException(DjackalAPIException):
     default_status_code = 500
 
+    def __init__(self, erra=None, code=None, message=None, context=None, status_code=None, **kwargs):
+        self.erra = erra
+        self.message = message
+        self.code = code
+        self.context = context
+        self.kwargs = kwargs
+        self.status_code = status_code or self.default_status_code
+
     def __str__(self):
         return self.get_message()
 
@@ -31,14 +39,6 @@ class ErraException(DjackalAPIException):
         elif self.erra:
             return self.erra.message
         return None
-
-    def __init__(self, erra=None, code=None, message=None, context=None, status_code=None, **kwargs):
-        self.erra = erra
-        self.message = message
-        self.code = code
-        self.context = context
-        self.kwargs = kwargs
-        self.status_code = status_code or self.default_status_code
 
     def response_data(self):
         if self.erra:
@@ -86,3 +86,11 @@ class NotAllowed(ErraException):
 
 class InternalServer(ErraException):
     default_status_code = 500
+
+
+class PermissionException(ErraException):
+    default_status_code = 403
+
+    def __init__(self, permission, erra=None, code=None, message=None, context=None, status_code=None, **kwargs):
+        super().__init__(erra=erra, code=code, message=message, context=context, status_code=status_code, **kwargs)
+        self.permission = permission
