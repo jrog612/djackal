@@ -1,4 +1,4 @@
-from djackal.param_funcs import BaseParamFunc
+from djackal.filters import BaseParamFunc
 
 
 class MyParamFunc(BaseParamFunc):

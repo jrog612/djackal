@@ -28,7 +28,7 @@ class CreateViewMixin:
         data = self.get_inspected_data()
         data.update(**self.get_bind_kwargs_data())
         if self.bind_user_field:
-            data[self.bind_user_field] = self.binding_user()
+            data[self.bind_user_field] = self.request.user
         return data
 
     def create_action(self, data):
@@ -53,7 +53,7 @@ class UpdateViewMixin:
         data = self.get_inspected_data()
         data.update(**self.get_bind_kwargs_data())
         if self.bind_user_field:
-            data[self.bind_user_field] = self.binding_user()
+            data[self.bind_user_field] = self.request.user
         return data
 
     def update_action(self, obj, data):

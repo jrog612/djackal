@@ -1,9 +1,213 @@
+import peb
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from djackal.filters import DjackalQueryFilter
+from djackal.exceptions import NotFound
+from djackal.filters import DefaultFilterFunc
 from djackal.settings import djackal_settings
+from djackal.shortcuts import gen_q
 from djackal.utils import value_mapper
+
+
+class FilterMixin:
+    lookup_map = {}
+    filter_map = {}
+    search_map = {}
+    extra_map = {}
+    ordering_map = {}
+
+    search_keyword_key = 'search_keyword'
+    search_type_key = 'search_type'
+    ordering_key = 'ordering'
+
+    custom_action_prefix = '@'
+
+    user_field = ''
+    bind_user_field = None
+    filter_func_class = DefaultFilterFunc
+
+    def get_filter_func_instance(self):
+        return self.filter_func_class()
+
+    def filter_func_action(self, name, value):
+        instance = self.get_filter_func_instance()
+        return instance.action(name, value)
+
+    def get_lookup_map(self, **additional):
+        d = self.lookup_map or dict()
+        return {**d, **additional}
+
+    def get_filter_map(self, **additional):
+        d = self.filter_map or dict()
+        return {**d, **additional}
+
+    def get_search_map(self, **additional):
+        d = self.search_map or dict()
+        return {**d, **additional}
+
+    def get_extra_map(self, **additional):
+        d = self.extra_map or dict()
+        return {**d, **additional}
+
+    def get_ordering_map(self, **additional):
+        d = self.ordering_map or dict()
+        return {**d, **additional}
+
+    def get_user_field(self):
+        return self.user_field
+
+    def filter_by_lookup_map(self, queryset, lookup_map=None):
+        if lookup_map is None:
+            lookup_map = self.get_lookup_map()
+
+        mapped = value_mapper(lookup_map, self.kwargs)
+        return queryset.filter(**mapped)
+
+    def filter_by_user(self, queryset, user_field=None):
+        if user_field is None:
+            user_field = self.get_user_field()
+
+        if not self.has_auth() or user_field is None:
+            return queryset
+        return queryset.filter(**{user_field: self.request.user})
+
+    def filter_by_extra_map(self, queryset, extra_map=None):
+        if extra_map is None:
+            extra_map = self.get_extra_map()
+        return queryset.filter(**extra_map)
+
+    def filter_by_filter_map(self, queryset, filter_map=None):
+        params = self.requset.query_params
+        if filter_map is None:
+            filter_map = self.get_filter_map()
+
+        for map_key, map_value in filter_map.items():
+            if map_key.find('[]') and hasattr(params, 'getlist'):
+                value = params.getlist(map_key)
+            else:
+                value = params.get(map_key)
+            if value in [None, '', []]:
+                continue
+
+            split_key = map_key.split(':')
+            if len(split_key) == 2:
+                value = self.filter_func_action(split_key[1], value)
+
+            if map_value.startwiths(self.custom_action_prefix):
+                keyword = map_value.replace(self.custom_action_prefix, '')
+                queryset = self.filter_by_filter_action(queryset, keyword, value)
+                continue
+            if peb.isiter(map_value):
+                queryset = queryset.filter(*gen_q(value, *map_value))
+            else:
+                queryset = queryset.filter(**{map_value: value})
+        return queryset
+
+    def filter_by_search_map(self, queryset, search_map=None):
+        if search_map is None:
+            search_map = self.get_search_map()
+
+        params = self.request.query_params
+        search_type = params.get(self.search_type_key)
+        search_keyword = params.get(self.search_keyword_key)
+        map_value = search_map.get(search_type)
+
+        if not search_keyword or not map_value:
+            return queryset
+
+        if map_value.startwiths(self.custom_action_prefix):
+            keyword = map_value.replace(self.custom_action_prefix, '')
+            return self.filter_by_search_action(queryset, keyword, search_keyword)
+        if peb.isiter(map_value):
+            return queryset.filter(gen_q(search_keyword, *map_value))
+        else:
+            return queryset.filter(**{map_value: search_keyword})
+
+    def filter_by_ordering(self, queryset, order_map=None):
+        if order_map is None:
+            order_map = self.get_ordering_map()
+
+        params = self.request.query_params
+        param_value = params.get(self.ordering_key)
+
+        if order_map is not None:
+            order_value = order_map.get(param_value)
+        else:
+            order_value = param_value
+
+        if not order_value:
+            return queryset
+
+        if order_value.start_with(self.custom_action_prefix):
+            keyword = order_value.replace(self.custom_action_prefix, '')
+            return self.filter_by_order_action(queryset, keyword)
+
+        order_by = order_value.split(',')
+        return queryset.order_by(*order_by)
+
+    def filter_by_filter_action(self, queryset, keyword, value):
+        return queryset
+
+    def filter_by_search_action(self, queryset, keyword, value):
+        return queryset
+
+    def filter_by_order_action(self, queryset, keyword):
+        return queryset
+
+    def get_filtered_queryset(self, queryset=None):
+        if queryset is None:
+            queryset = self.get_queryset()
+
+        queryset = self.filter_by_user(queryset)
+        queryset = self.filter_by_lookup_map(queryset)
+        queryset = self.filter_by_extra_map(queryset)
+        queryset = self.filter_by_filter_map(queryset)
+        queryset = self.filter_by_search_map(queryset)
+        queryset = self.filter_by_ordering(queryset)
+
+        return queryset
+
+    def get_object(self, queryset=None):
+        if queryset is None:
+            queryset = self.get_queryset()
+
+        queryset = self.filter_by_user(queryset)
+        queryset = self.filter_by_lookup_map(queryset)
+        queryset = self.filter_by_extra_map(queryset)
+
+        obj = queryset.first()
+        if obj is None:
+            raise NotFound(model=queryset.model)
+        self.check_object_permissions(request=self.request, obj=obj)
+        return obj
+
+
+class InspectMixin:
+    inspect_map = None
+    inspect_map_many = False
+    inspector = None
+
+    def get_inspector(self, key=None):
+        inspect_map = self.get_inspect_map(key)
+        if not inspect_map:
+            raise AttributeError('{} instance has no inspect_map.'.format(self.__class__.__name__))
+        inspector = self.inspector or djackal_settings.DEFAULT_INSPECTOR
+        return inspector(inspect_map)
+
+    def get_inspected_data(self, key=None):
+        inspector = self.get_inspector(key=key)
+        return inspector.inspect(self.request.data)
+
+    def get_inspect_map(self, key=None):
+        if not self.inspect_map_many:
+            return self.inspect_map
+        elif key in self.inspect_map:
+            return self.inspect_map[key]
+        elif self.request.method in self.inspect_map:
+            return self.inspect_map[self.request.method]
+        elif 'default' in self.inspect_map:
+            return self.inspect_map['default']
+        return None
 
 
 class BaseDjackalAPIView(APIView):
@@ -122,33 +326,16 @@ class BaseDjackalAPIView(APIView):
         return self.request.user is not None and self.request.user.is_authenticated
 
 
-class DjackalAPIView(BaseDjackalAPIView):
+class DjackalAPIView(BaseDjackalAPIView, FilterMixin, InspectMixin):
     model = None
     queryset = None
 
-    lookup_map = {}
-    filter_map = {}
     bind_kwargs_map = {}
-    search_dict = {}
-    extra_kwargs = {}
-    ordering_map = {}
-
-    user_field = ''
-    bind_user_field = None
-
-    search_keyword_key = 'search_keyword'
-    search_type_key = 'search_type'
-    ordering_key = 'ordering'
 
     serializer_class = None
-    query_filter_class = DjackalQueryFilter
 
     pagination_class = djackal_settings.DEFAULT_PAGINATION_CLASS
     paging = False
-
-    inspect_map = None
-    inspect_map_many = False
-    inspector = None
 
     @property
     def paginator(self):
@@ -198,38 +385,6 @@ class DjackalAPIView(BaseDjackalAPIView):
         )
         return queryset.model
 
-    def get_lookup_map(self, **additional):
-        d = self.lookup_map or dict()
-        return {**d, **additional}
-
-    def get_filter_map(self, **additional):
-        d = self.filter_map or dict()
-        return {**d, **additional}
-
-    def get_search_dict(self, **additional):
-        d = self.search_dict or dict()
-        return {**d, **additional}
-
-    def get_extra_kwargs(self, **additional):
-        d = self.extra_kwargs or dict()
-        return {**d, **additional}
-
-    def get_ordering_map(self, **additional):
-        d = self.ordering_map or dict()
-        return {**d, **additional}
-
-    def get_bind_kwargs_map(self, **additional):
-        d = self.bind_kwargs_map or dict()
-        return {**d, **additional}
-
-    def get_bind_kwargs_data(self):
-        return value_mapper(self.get_bind_kwargs_map(), self.kwargs)
-
-    def get_query_filter_class(self):
-        if self.query_filter_class is None:
-            return DjackalQueryFilter
-        return self.query_filter_class
-
     def get_serializer_class(self):
         return self.serializer_class
 
@@ -243,65 +398,12 @@ class DjackalAPIView(BaseDjackalAPIView):
         ser = klass(instance, many=many, context=context)
         return ser
 
-    def get_object(self, queryset=None):
-        if queryset is None:
-            queryset = self.get_queryset()
-        queryset = self.get_user_queryset(queryset=queryset)
+    def get_bind_kwargs_map(self, **additional):
+        d = self.bind_kwargs_map or dict()
+        return {**d, **additional}
 
-        f_class = self.get_query_filter_class()
-        f = f_class(queryset=queryset, params=self.request.query_params)
-
-        lookup_map = self.get_lookup_map()
-        extra_kwargs = self.get_extra_kwargs(
-            **value_mapper(lookup_map, self.kwargs)
-        )
-
-        obj = f.extra(**extra_kwargs).get(raise_404=True)
-        self.check_object_permissions(request=self.request, obj=obj)
-        return obj
-
-    def get_filtered_queryset(self, queryset=None):
-        if queryset is None:
-            queryset = self.get_queryset()
-        queryset = self.get_user_queryset(queryset=queryset)
-
-        f_class = self.get_query_filter_class()
-        f = f_class(queryset=queryset, params=self.request.query_params)
-
-        lookup_map = self.get_lookup_map()
-        filter_map = self.get_filter_map()
-        ordering_map = self.get_ordering_map()
-        search_dict = self.get_search_dict()
-        extra_kwargs = self.get_extra_kwargs()
-        extra_kwargs.update(value_mapper(lookup_map, self.kwargs))
-
-        queryset = f.search(
-            search_dict,
-            search_keyword_key=self.search_keyword_key,
-            search_type_key=self.search_type_key,
-        ).filter_map(filter_map).extra(
-            **extra_kwargs
-        ).ordering(
-            ordering_map=ordering_map,
-            ordering_key=self.ordering_key,
-        ).queryset
-        return queryset
-
-    def get_user_queryset(self, queryset=None):
-        if queryset is None:
-            queryset = self.get_queryset()
-
-        user_field = self.get_user_field()
-        if user_field:
-            queryset = queryset.filter(**{user_field: self.request.user})
-
-        return queryset
-
-    def get_user_field(self):
-        return self.user_field
-
-    def binding_user(self):
-        return self.request.user
+    def get_bind_kwargs_data(self):
+        return value_mapper(self.get_bind_kwargs_map(), self.kwargs)
 
     def simple_response(self, result=None, status=200, meta=None, headers=None, **kwargs):
         response_data = {}
@@ -314,25 +416,3 @@ class DjackalAPIView(BaseDjackalAPIView):
             response_data = result or dict()
 
         return Response(response_data, status=status, headers=headers, **kwargs)
-
-    def get_inspector(self, key=None):
-        inspect_map = self.get_inspect_map(key)
-        if not inspect_map:
-            raise AttributeError('{} instance has no inspect_map.'.format(self.__class__.__name__))
-        inspector = self.inspector or djackal_settings.DEFAULT_INSPECTOR
-        return inspector(inspect_map)
-
-    def get_inspected_data(self, key=None):
-        inspector = self.get_inspector(key=key)
-        return inspector.inspect(self.request.data)
-
-    def get_inspect_map(self, key=None):
-        if not self.inspect_map_many:
-            return self.inspect_map
-        elif key in self.inspect_map:
-            return self.inspect_map[key]
-        elif self.request.method in self.inspect_map:
-            return self.inspect_map[self.request.method]
-        elif 'default' in self.inspect_map:
-            return self.inspect_map['default']
-        return None

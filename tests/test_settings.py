@@ -1,6 +1,6 @@
 from django.test import TestCase, override_settings
 
-from djackal.param_funcs import DefaultParamFunc
+from djackal.filters import DefaultFilterFunc
 from djackal.settings import DjackalSettings, djackal_settings
 
 
@@ -25,4 +25,4 @@ class TestSettings(TestCase):
 
     def test_str_import(self):
         dq = djackal_settings.PARAM_FUNC_CLASSES[0]
-        assert dq is DefaultParamFunc
+        assert dq is DefaultFilterFunc
