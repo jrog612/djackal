@@ -40,10 +40,10 @@ def get_model(label, *args, **kwargs):
     return apps.get_model(label, *args, **kwargs)
 
 
-def gen_q(key, *filter_keywords):
+def gen_q(value, *filter_keywords):
     q_object = Q()
     for q in filter_keywords:
-        q_object |= Q(**{q: key})
+        q_object |= Q(**{q: value})
     return q_object
 
 
