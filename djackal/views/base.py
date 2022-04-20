@@ -21,7 +21,7 @@ class FilterMixin:
 
     custom_action_prefix = '@'
 
-    user_field = ''
+    user_field = None
     bind_user_field = None
     filter_func_class = DefaultFilterFunc
 
@@ -66,7 +66,7 @@ class FilterMixin:
         if user_field is None:
             user_field = self.get_user_field()
 
-        if not self.has_auth() or user_field is None:
+        if not self.has_auth() or not user_field:
             return queryset
         return queryset.filter(**{user_field: self.request.user})
 
