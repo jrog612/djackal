@@ -1,6 +1,5 @@
-import peb
-
 from djackal.settings import djackal_settings
+from djackal.utils import isiter
 
 
 class skip:
@@ -101,7 +100,7 @@ class Inspector:
         standard = self.type_maps[param]
         value_type = type(value)
 
-        if (peb.isiter(standard) and value_type in standard) or value_type is standard:
+        if (isiter(standard) and value_type in standard) or value_type is standard:
             return value
         raise InspectActionException(
             key, value, action='type', param=param,

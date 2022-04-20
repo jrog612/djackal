@@ -1,4 +1,3 @@
-import peb
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -6,7 +5,7 @@ from djackal.exceptions import NotFound
 from djackal.filters import DefaultFilterFunc
 from djackal.settings import djackal_settings
 from djackal.shortcuts import gen_q
-from djackal.utils import value_mapper
+from djackal.utils import value_mapper, isiter
 
 
 class FilterMixin:
@@ -97,7 +96,7 @@ class FilterMixin:
                 keyword = map_value.replace(self.custom_action_prefix, '')
                 queryset = self.filter_by_filter_action(queryset, keyword, value)
                 continue
-            if peb.isiter(map_value):
+            if isiter(map_value):
                 queryset = queryset.filter(*gen_q(value, *map_value))
             else:
                 queryset = queryset.filter(**{map_value: value})
@@ -118,7 +117,7 @@ class FilterMixin:
         if map_value.startwiths(self.custom_action_prefix):
             keyword = map_value.replace(self.custom_action_prefix, '')
             return self.filter_by_search_action(queryset, keyword, search_keyword)
-        if peb.isiter(map_value):
+        if isiter(map_value):
             return queryset.filter(gen_q(search_keyword, *map_value))
         else:
             return queryset.filter(**{map_value: search_keyword})
