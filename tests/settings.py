@@ -17,8 +17,6 @@ INSTALLED_APPS = (
 
 MIDDLEWARE = []
 
-ROOT_URLCONF = 'tests.urls'
-
 USE_TZ = True
 
 SECRET_KEY = 'foobar'
