@@ -77,7 +77,7 @@ class FilterMixin:
         return queryset.filter(**extra_map)
 
     def filter_by_filter_map(self, queryset, filter_map=None):
-        params = self.requset.query_params
+        params = self.request.query_params
         if filter_map is None:
             filter_map = self.get_filter_map()
 
