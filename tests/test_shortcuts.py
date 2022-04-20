@@ -1,7 +1,10 @@
+import random
+
 from django.test import override_settings
 
 from djackal.exceptions import NotFound
-from djackal.shortcuts import get_object_or_404, get_object_or_None, model_update, get_object_or, get_model, auto_f_key
+from djackal.shortcuts import get_object_or_404, get_object_or_None, model_update, get_object_or, get_model, auto_f_key, \
+    gen_q
 from djackal.tests import DjackalTransactionTestCase
 from tests.models import TestModel
 
@@ -43,6 +46,20 @@ class TestShortcuts(DjackalTransactionTestCase):
         }):
             model = get_model('TestModel')
             self.assertEqual(TestModel, model)
+
+    def test_gen_q(self):
+        random_int = random.randint(1, 100)
+        random_char = f'random_char_{random_int}'
+        tm1 = TestModel.objects.create(field_int=random_int)
+        tm2 = TestModel.objects.create(field_char=random_char)
+        TestModel.objects.create(field_char='WRONG')
+        TestModel.objects.create(field_int=random_int + 100)
+
+        qs = gen_q(random_int, 'field_int', 'field_char__contains')
+        result = TestModel.objects.filter(qs)
+        self.assertIn(tm1, result)
+        self.assertIn(tm2, result)
+        self.assertLen(2, result)
 
     def test_auto_f_key(self):
         tm = TestModel.objects.create()
