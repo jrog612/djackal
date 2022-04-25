@@ -29,6 +29,13 @@ class TestShortcuts(DjackalTransactionTestCase):
         obj = TestModel.objects.create(field_int=1, field_char='text')
 
         obj = model_update(obj, field_int=2, field_char='test2')
+        obj.refresh_from_db()
+
+        self.assertEqual(obj.field_int, 2)
+        self.assertEqual(obj.field_char, 'test2')
+
+        obj = model_update(obj, field_int=4, field_char='test4', commit=False)
+        obj.refresh_from_db()
 
         self.assertEqual(obj.field_int, 2)
         self.assertEqual(obj.field_char, 'test2')

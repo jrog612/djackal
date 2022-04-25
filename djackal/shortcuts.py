@@ -25,11 +25,12 @@ def get_object_or_404(model, **fields):
     return obj
 
 
-def model_update(instance, **fields):
+def model_update(instance, commit=True, **fields):
     for key, value in fields.items():
         setattr(instance, key, value)
 
-    instance.save()
+    if commit:
+        instance.save()
     return instance
 
 
