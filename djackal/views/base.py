@@ -18,6 +18,7 @@ class FilterMixin:
     search_keyword_key = 'search_keyword'
     search_type_key = 'search_type'
     ordering_key = 'ordering'
+    ordering_default = None
 
     custom_action_prefix = '@'
 
@@ -135,7 +136,9 @@ class FilterMixin:
             order_value = param_value
 
         if not order_value:
-            return queryset
+            if not self.ordering_default:
+                return queryset
+            order_value = self.ordering_default
 
         if order_value.start_with(self.custom_action_prefix):
             keyword = order_value.replace(self.custom_action_prefix, '')
