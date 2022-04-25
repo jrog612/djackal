@@ -212,6 +212,31 @@ class InspectMixin:
         return None
 
 
+class PageMixin:
+    pagination_class = djackal_settings.DEFAULT_PAGINATION_CLASS
+    paging = False
+
+    @property
+    def paginator(self):
+        if not hasattr(self, '_paginator'):
+            if not self.paging:
+                self._paginator = None
+            else:
+                if self.pagination_class is None:
+                    self._paginator = None
+                else:
+                    self._paginator = self.pagination_class()
+        return self._paginator
+
+    def get_paginate_queryset(self, queryset):
+        if self.paginator is None:
+            return None
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+    def get_paginated_meta(self):
+        return self.paginator.get_paginated_meta()
+
+
 class BaseDjackalAPIView(APIView):
     default_permission_classes = ()
     default_authentication_classes = ()
@@ -327,44 +352,30 @@ class BaseDjackalAPIView(APIView):
     def has_auth(self):
         return self.request.user is not None and self.request.user.is_authenticated
 
+    def get_meta(self, **kwargs):
+        return kwargs
 
-class DjackalAPIView(BaseDjackalAPIView, FilterMixin, InspectMixin):
+    def simple_response(self, result=None, status=200, meta=None, headers=None, **kwargs):
+        response_data = {}
+
+        if self.result_root:
+            response_data[self.result_root] = result
+            if self.result_meta:
+                meta = self.get_meta(**(meta or dict()))
+                response_data[self.result_meta] = meta
+        else:
+            response_data = result or dict()
+
+        return Response(response_data, status=status, headers=headers, **kwargs)
+
+
+class DjackalAPIView(BaseDjackalAPIView, FilterMixin, InspectMixin, PageMixin):
     model = None
     queryset = None
 
     bind_kwargs_map = {}
 
     serializer_class = None
-
-    pagination_class = djackal_settings.DEFAULT_PAGINATION_CLASS
-    paging = False
-
-    @property
-    def paginator(self):
-        if not hasattr(self, '_paginator'):
-            if not self.paging:
-                self._paginator = None
-            else:
-                if self.pagination_class is None:
-                    self._paginator = None
-                else:
-                    self._paginator = self.pagination_class()
-        return self._paginator
-
-    def get_paginate_queryset(self, queryset):
-        if self.paginator is None:
-            return None
-        return self.paginator.paginate_queryset(queryset, self.request, view=self)
-
-    def get_paginated_meta(self):
-        assert self.paginator is not None
-        current_page = self.paginator.page
-
-        return {
-            'count': current_page.paginator.count,
-            'previous': self.paginator.get_previous_link(),
-            'next': self.paginator.get_next_link(),
-        }
 
     def get_queryset(self):
         assert self.queryset is not None or self.model is not None, (
@@ -406,15 +417,3 @@ class DjackalAPIView(BaseDjackalAPIView, FilterMixin, InspectMixin):
 
     def get_bind_kwargs_data(self):
         return value_mapper(self.get_bind_kwargs_map(), self.kwargs)
-
-    def simple_response(self, result=None, status=200, meta=None, headers=None, **kwargs):
-        response_data = {}
-
-        if self.result_root:
-            response_data[self.result_root] = result
-            if self.result_meta:
-                response_data[self.result_meta] = meta or dict()
-        else:
-            response_data = result or dict()
-
-        return Response(response_data, status=status, headers=headers, **kwargs)
