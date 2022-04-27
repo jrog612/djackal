@@ -33,6 +33,7 @@ class Inspector:
             'type': ['int', 'float', 'number', 'str', 'list', 'dict', 'bool'],
             'default': {DEFAULT_VALUE},
             'convert': [int, float, str, list, convert_function, ...],
+            'valid': {Validation Function}
         },
         another_key: {
             ...actions
@@ -49,7 +50,7 @@ class Inspector:
         'list': (tuple, list, set),
         'dict': dict,
     }
-    allow_actions = ['required', 'default', 'type', 'convert', 'unknown']
+    allow_actions = ['required', 'default', 'convert', 'type', 'valid', 'unknown']
 
     def __init__(self, _map):
         self.inspect_map = _map
@@ -120,10 +121,29 @@ class Inspector:
             return default
         return value
 
+    def action_valid(self, key, value, param):
+        if not callable(param):
+            raise InspectActionException(
+                key, value, action='valid', param=param,
+                message='valid function: {} is not callable'.format(param)
+            )
+
+        if param(value):
+            return value
+        else:
+            raise InspectActionException(
+                key, value, action='valid', param=param,
+                message='validation error: {} is invalid value {}'.format(key, value)
+            )
+
     def sort_field(self, field):
         if 'required' in field and 'default' in field:
             raise InspectorException(
-                'Validation failed: required action cannot be used with default.'
+                'Inspect failed: required action cannot be used with default.'
+            )
+        elif 'convert' in field and 'type' in field:
+            raise InspectorException(
+                'Inspect failed: convert action cannot be used with type.'
             )
 
         result = {}

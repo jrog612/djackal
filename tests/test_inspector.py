@@ -3,6 +3,18 @@ from django.test import TestCase
 from djackal.inspector import Inspector, skip, InspectActionException
 
 
+def test_validation1(value):
+    if type(value) is not list:
+        return False
+    return len(value) >= 1
+
+
+def test_validation2(value):
+    if type(value) is not dict:
+        return False
+    return 'field' in value
+
+
 class TestInspector(TestCase):
     def test_unknown(self):
         target = {
@@ -73,7 +85,7 @@ class TestInspector(TestCase):
             'two': {'convert': int},
             'three': {'convert': _inner_convertor},
             'four': {'convert': bool},
-            'five': {'default': skip, 'convert': int}, # if skip not work, error raised.
+            'five': {'default': skip, 'convert': int},  # if skip not work, error raised.
         }
         expected = {
             'one': '123',
@@ -158,6 +170,34 @@ class TestInspector(TestCase):
         ins = Inspector(inspect_map)
         result = ins.inspect(target)
         self.assertEqual(expected, result)
+
+    def test_valid(self):
+        def _check_raise(_target, key):
+            with self.assertRaises(InspectActionException) as e:
+                ins.inspect(_target)
+                exc = e.exception
+                self.assertEqual(exc.action, 'valid')
+                self.assertEqual(exc.key, key)
+
+        inspect_map = {
+            'one': {'valid': test_validation1},
+            'two': {'valid': test_validation2},
+        }
+        target = {'one': 'NOT_VALID'}
+
+        ins = Inspector(inspect_map)
+        _check_raise(target, 'one')
+
+        target['one'] = []
+        _check_raise(target, 'one')
+
+        target['one'].append(1)
+        target['two'] = {}
+        _check_raise(target, 'two')
+
+        # Success
+        target['two']['field'] = 1
+        ins.inspect(target)
 
     def test_inspect(self):
         target = {
