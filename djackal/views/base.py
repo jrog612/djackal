@@ -93,7 +93,7 @@ class FilterMixin:
             if len(split_key) == 2:
                 value = self.filter_func_action(split_key[1], value)
 
-            if map_value.startwiths(self.custom_action_prefix):
+            if map_value.startswith(self.custom_action_prefix):
                 keyword = map_value.replace(self.custom_action_prefix, '')
                 queryset = self.filter_by_filter_action(queryset, keyword, value)
                 continue
@@ -115,7 +115,7 @@ class FilterMixin:
         if not search_keyword or not map_value:
             return queryset
 
-        if map_value.startwiths(self.custom_action_prefix):
+        if map_value.startswith(self.custom_action_prefix):
             keyword = map_value.replace(self.custom_action_prefix, '')
             return self.filter_by_search_action(queryset, keyword, search_keyword)
         if isiter(map_value):
