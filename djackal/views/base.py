@@ -82,7 +82,7 @@ class FilterMixin:
             filter_map = self.get_filter_map()
 
         for map_key, map_value in filter_map.items():
-            if map_key.find('[]') and hasattr(params, 'getlist'):
+            if map_key.endswith('[]') and hasattr(params, 'getlist'):
                 value = params.getlist(map_key)
             else:
                 value = params.get(map_key)
