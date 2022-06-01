@@ -61,11 +61,13 @@ class NoCountPagination(PageNumberPagination):
         # Get one extra element to check if there is a "next" page
         q = list(queryset[offset: offset + page_size + 1])
         self.count = offset + len(q) if len(q) else offset - 1
+        self.has_next = False
+
         if len(q) > page_size:
+            self.has_next = True
             q.pop()
 
         self.request = request
-        self.has_next = self.count > page_size
         return q
 
     def get_paginated_meta(self):
