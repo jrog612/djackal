@@ -4,7 +4,7 @@ from djackal.utils import isiter
 
 class skip:
     """
-    When null is this class, that will removed in value dict.
+    When null is this class, that will remove in value dict.
     """
     pass
 
@@ -152,6 +152,12 @@ class Inspector:
                 result[action] = field[action]
         return result
 
+    def action(self, action, key, value, param):
+        if action not in self.allow_actions:
+            raise InspectorException('invalid action: {}'.format(action))
+        method = getattr(self, 'action_{}'.format(action))
+        return method(key, value, param)
+
     def inspect(self, data):
         result = {}
 
@@ -176,8 +182,7 @@ class Inspector:
             result[key] = value
         return result
 
-    def action(self, action, key, value, param):
-        if action not in self.allow_actions:
-            raise InspectorException('invalid action: {}'.format(action))
-        method = getattr(self, 'action_{}'.format(action))
-        return method(key, value, param)
+    @classmethod
+    def inspect_with_map(cls, data, _map):
+        inspector = cls(_map)
+        return inspector.inspect(data)
