@@ -10,11 +10,14 @@ homepage = 'https://github.com/jrog612/djackal'
 packages = [
     { include = 'djackal' }
 ]
-exclude = ['test*', '.*']
+include = [
+    { path = "tests", format = "sdist" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.6"
 djangorestframework = "^3.0.0"
+hyena-py = "^0.0.1"
 
 [tool.poetry.dev-dependencies]
 

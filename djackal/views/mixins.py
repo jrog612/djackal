@@ -25,7 +25,7 @@ class ListViewMixin:
 
 class CreateViewMixin:
     def get_create_data(self):
-        data = self.get_inspected_data()
+        data = self.get_request_data()
         data.update(**self.get_bind_kwargs_data())
         if self.bind_user_field:
             data[self.bind_user_field] = self.request.user
@@ -50,7 +50,7 @@ class DetailViewMixin:
 
 class UpdateViewMixin:
     def get_update_data(self):
-        data = self.get_inspected_data()
+        data = self.get_request_data()
         data.update(**self.get_bind_kwargs_data())
         if self.bind_user_field:
             data[self.bind_user_field] = self.request.user
@@ -58,6 +58,7 @@ class UpdateViewMixin:
 
     def update_action(self, obj, data):
         model_update(obj, **data)
+        return obj
 
     def update(self, request, **kwargs):
         obj = self.get_object()

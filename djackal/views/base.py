@@ -1,3 +1,4 @@
+from hyena import Hyena
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -184,34 +185,6 @@ class FilterMixin:
         return obj
 
 
-class InspectMixin:
-    inspect_map = None
-    inspect_map_many = False
-    inspector = None
-
-    def get_inspector(self, key=None):
-        inspect_map = self.get_inspect_map(key)
-        if not inspect_map:
-            raise AttributeError('{} instance has no inspect_map.'.format(self.__class__.__name__))
-        inspector = self.inspector or djackal_settings.DEFAULT_INSPECTOR
-        return inspector(inspect_map)
-
-    def get_inspected_data(self, key=None):
-        inspector = self.get_inspector(key=key)
-        return inspector.inspect(self.request.data)
-
-    def get_inspect_map(self, key=None):
-        if not self.inspect_map_many:
-            return self.inspect_map
-        elif key in self.inspect_map:
-            return self.inspect_map[key]
-        elif self.request.method in self.inspect_map:
-            return self.inspect_map[self.request.method]
-        elif 'default' in self.inspect_map:
-            return self.inspect_map['default']
-        return None
-
-
 class PageMixin:
     pagination_class = djackal_settings.DEFAULT_PAGINATION_CLASS
     paging = False
@@ -369,7 +342,21 @@ class BaseDjackalAPIView(APIView):
         return Response(response_data, status=status, headers=headers, **kwargs)
 
 
-class DjackalAPIView(BaseDjackalAPIView, FilterMixin, InspectMixin, PageMixin):
+class DataPurifyMixin:
+    data_schema = None
+
+    def get_purified_data(self, key=None):
+        schema = self.get_data_schema(key)
+        hyn = Hyena(schema)
+        return hyn.purify(self.request.data)
+
+    def get_data_schema(self, key=None):
+        if key in self.data_schema:
+            return self.data_schema[key]
+        return self.data_schema
+
+
+class DjackalAPIView(BaseDjackalAPIView, FilterMixin, PageMixin, DataPurifyMixin):
     model = None
     queryset = None
 
@@ -397,6 +384,9 @@ class DjackalAPIView(BaseDjackalAPIView, FilterMixin, InspectMixin, PageMixin):
             'or override the get_model() method'.format(self.__class__.__name__)
         )
         return queryset.model
+
+    def get_request_data(self, key=None):
+        return self.get_purified_data(key)
 
     def get_serializer_class(self):
         return self.serializer_class
