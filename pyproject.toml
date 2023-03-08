@@ -17,7 +17,7 @@ include = [
 [tool.poetry.dependencies]
 python = "^3.6"
 djangorestframework = "^3.0.0"
-hyena-py = "^0.0.1"
+hyena-py = "^0.0"
 
 [tool.poetry.dev-dependencies]
 
