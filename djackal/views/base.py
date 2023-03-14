@@ -1,4 +1,4 @@
-from hyena import Hyena
+from puty import purify
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -345,10 +345,9 @@ class BaseDjackalAPIView(APIView):
 class DataPurifyMixin:
     data_schema = None
 
-    def get_purified_data(self, key=None):
+    def get_purified_data(self, key=None, many=False):
         schema = self.get_data_schema(key)
-        hyn = Hyena(schema)
-        return hyn.purify(self.request.data)
+        return purify(self.request.data, schema, many=many)
 
     def get_data_schema(self, key=None):
         if key in self.data_schema:
