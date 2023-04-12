@@ -1,5 +1,5 @@
 from djackal.tests import DjackalTestCase
-from djackal.utils import isiter, value_mapper
+from djackal.utils import islist, value_mapper, isiter
 
 
 class TestLoader(DjackalTestCase):
@@ -18,14 +18,34 @@ class TestLoader(DjackalTestCase):
         assert result[a_dict['key1']] == b_dict['key1']
         assert result[a_dict['key2']] == b_dict['key2']
 
-    def test_iterable(self):
-        self.assertTrue(isiter([1, 2, 3]))
-        self.assertTrue(isiter((1, 2, 3)))
-        self.assertTrue(isiter({1, 2, 3}))
-        self.assertTrue(isiter({1: 1, 2: 2, 3: 3}))
+    def test_islist(self):
+        test_values = [
+            ([1, 2, 3], True),
+            ((1, 2, 3), True),
+            ({1, 2, 3}, True),
+            ({1: 1, 2: 2, 3: 3}, False),
+            ('String Sentence', False),
+            (None, False),
+            (False, False),
+            (True, False),
+            (123, False),
+        ]
 
-        self.assertFalse(isiter('String Sentence'))
-        self.assertFalse(isiter(None))
-        self.assertFalse(isiter(False))
-        self.assertFalse(isiter(True))
-        self.assertFalse(isiter(123))
+        for val in test_values:
+            self.assertIs(islist(val[0]), val[1])
+
+    def test_isiter(self):
+        test_values = [
+            ([1, 2, 3], True),
+            ((1, 2, 3), True),
+            ({1, 2, 3}, True),
+            ({1: 1, 2: 2, 3: 3}, True),
+            ('String Sentence', False),
+            (None, False),
+            (False, False),
+            (True, False),
+            (123, False),
+        ]
+
+        for val in test_values:
+            self.assertIs(isiter(val[0]), val[1])

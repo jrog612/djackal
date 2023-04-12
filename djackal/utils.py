@@ -1,4 +1,4 @@
-import collections
+from collections.abc import Iterable
 
 
 def value_mapper(a_dict, b_dict):
@@ -23,5 +23,15 @@ def value_mapper(a_dict, b_dict):
     return {a_value: b_dict.get(a_key) for a_key, a_value in a_dict.items()}
 
 
+def islist(arg):
+    """
+    check arg is list or tuple or set not str or dict
+    """
+    return isinstance(arg, Iterable) and not isinstance(arg, (str, dict))
+
+
 def isiter(arg):
-    return isinstance(arg, collections.Iterable) and not isinstance(arg, str)
+    """
+    check arg is list or tuple or set or dict not str
+    """
+    return isinstance(arg, Iterable) and not isinstance(arg, str)
