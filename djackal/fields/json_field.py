@@ -10,7 +10,8 @@ def dumps(value):
         cls=DjangoJSONEncoder,
         sort_keys=True,
         indent=2,
-        separators=(',', ': ')
+        separators=(',', ': '),
+        ensure_ascii=False,
     )
 
 
