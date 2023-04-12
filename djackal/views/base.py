@@ -2,48 +2,31 @@ from puty import purify
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from djackal import query_filter
 from djackal.exceptions import NotFound
-from djackal.filters import DefaultFilterFunc
 from djackal.settings import djackal_settings
-from djackal.shortcuts import gen_q
-from djackal.utils import value_mapper, isiter
+from djackal.utils import value_mapper
 
 
-class FilterMixin:
+class QueryFilterMixin:
     lookup_map = {}
-    filter_map = {}
-    search_map = {}
     extra_map = {}
     ordering_map = {}
 
-    search_keyword_key = 'search_keyword'
-    search_type_key = 'search_type'
     ordering_key = 'ordering'
     ordering_default = None
 
-    custom_action_prefix = '@'
+    filter_schema = {}
 
     user_field = None
     bind_user_field = None
-    filter_func_class = DefaultFilterFunc
-
-    def get_filter_func_instance(self):
-        return self.filter_func_class()
-
-    def filter_func_action(self, name, value):
-        instance = self.get_filter_func_instance()
-        return instance.action(name, value)
 
     def get_lookup_map(self, **additional):
         d = self.lookup_map or dict()
         return {**d, **additional}
 
-    def get_filter_map(self, **additional):
-        d = self.filter_map or dict()
-        return {**d, **additional}
-
-    def get_search_map(self, **additional):
-        d = self.search_map or dict()
+    def get_filter_schema(self, **additional):
+        d = self.filter_schema or dict()
         return {**d, **additional}
 
     def get_extra_map(self, **additional):
@@ -57,14 +40,14 @@ class FilterMixin:
     def get_user_field(self):
         return self.user_field
 
-    def filter_by_lookup_map(self, queryset, lookup_map=None):
+    def query_by_lookup_map(self, queryset, lookup_map=None):
         if lookup_map is None:
             lookup_map = self.get_lookup_map()
 
         mapped = value_mapper(lookup_map, self.kwargs)
         return queryset.filter(**mapped)
 
-    def filter_by_user(self, queryset, user_field=None):
+    def query_by_user(self, queryset, user_field=None):
         if user_field is None:
             user_field = self.get_user_field()
 
@@ -72,63 +55,23 @@ class FilterMixin:
             return queryset
         return queryset.filter(**{user_field: self.request.user})
 
-    def filter_by_extra_map(self, queryset, extra_map=None):
+    def query_by_extra_map(self, queryset, extra_map=None):
         if extra_map is None:
             extra_map = self.get_extra_map()
         return queryset.filter(**extra_map)
 
-    def filter_by_filter_map(self, queryset, filter_map=None):
-        params = self.request.query_params
-        if filter_map is None:
-            filter_map = self.get_filter_map()
+    def query_by_filter_schema(self, queryset, filter_schema=None):
+        params = self.get_query_params_dict()
+        if filter_schema is None:
+            filter_schema = self.get_filter_schema()
 
-        for map_key, map_value in filter_map.items():
-            if map_key.endswith('[]') and hasattr(params, 'getlist'):
-                value = params.getlist(map_key)
-            else:
-                value = params.get(map_key)
-            if value in [None, '', []]:
-                continue
+        return query_filter.filtering(queryset, params, filter_schema)
 
-            split_key = map_key.split(':')
-            if len(split_key) == 2:
-                value = self.filter_func_action(split_key[1], value)
-
-            if map_value.startswith(self.custom_action_prefix):
-                keyword = map_value.replace(self.custom_action_prefix, '')
-                queryset = self.filter_by_filter_action(queryset, keyword, value)
-                continue
-            if isiter(map_value):
-                queryset = queryset.filter(*gen_q(value, *map_value))
-            else:
-                queryset = queryset.filter(**{map_value: value})
-        return queryset
-
-    def filter_by_search_map(self, queryset, search_map=None):
-        if search_map is None:
-            search_map = self.get_search_map()
-
-        params = self.request.query_params
-        search_type = params.get(self.search_type_key)
-        search_keyword = params.get(self.search_keyword_key)
-        map_value = search_map.get(search_type)
-
-        if not search_keyword or not map_value:
-            return queryset
-
-        if map_value.startswith(self.custom_action_prefix):
-            keyword = map_value.replace(self.custom_action_prefix, '')
-            return self.filter_by_search_action(queryset, keyword, search_keyword)
-        if isiter(map_value):
-            return queryset.filter(gen_q(search_keyword, *map_value))
-        else:
-            return queryset.filter(**{map_value: search_keyword})
-
-    def filter_by_ordering(self, queryset, order_map=None):
+    def query_by_ordering(self, queryset, order_map=None):
         if order_map is None:
             order_map = self.get_ordering_map()
 
-        params = self.request.query_params
+        params = self.get_query_params_dict()
         param_value = params.get(self.ordering_key)
 
         if order_map is not None:
@@ -141,32 +84,18 @@ class FilterMixin:
                 return queryset
             order_value = self.ordering_default
 
-        if order_value.start_with(self.custom_action_prefix):
-            keyword = order_value.replace(self.custom_action_prefix, '')
-            return self.filter_by_order_action(queryset, keyword)
-
         order_by = order_value.split(',')
         return queryset.order_by(*order_by)
-
-    def filter_by_filter_action(self, queryset, keyword, value):
-        return queryset
-
-    def filter_by_search_action(self, queryset, keyword, value):
-        return queryset
-
-    def filter_by_order_action(self, queryset, keyword):
-        return queryset
 
     def get_filtered_queryset(self, queryset=None):
         if queryset is None:
             queryset = self.get_queryset()
 
-        queryset = self.filter_by_user(queryset)
-        queryset = self.filter_by_lookup_map(queryset)
-        queryset = self.filter_by_extra_map(queryset)
-        queryset = self.filter_by_filter_map(queryset)
-        queryset = self.filter_by_search_map(queryset)
-        queryset = self.filter_by_ordering(queryset)
+        queryset = self.query_by_user(queryset)
+        queryset = self.query_by_lookup_map(queryset)
+        queryset = self.query_by_extra_map(queryset)
+        queryset = self.query_by_filter_schema(queryset)
+        queryset = self.query_by_ordering(queryset)
 
         return queryset
 
@@ -174,9 +103,9 @@ class FilterMixin:
         if queryset is None:
             queryset = self.get_queryset()
 
-        queryset = self.filter_by_user(queryset)
-        queryset = self.filter_by_lookup_map(queryset)
-        queryset = self.filter_by_extra_map(queryset)
+        queryset = self.query_by_user(queryset)
+        queryset = self.query_by_lookup_map(queryset)
+        queryset = self.query_by_extra_map(queryset)
 
         obj = queryset.first()
         if obj is None:
@@ -208,6 +137,29 @@ class PageMixin:
 
     def get_paginated_meta(self):
         return self.paginator.get_paginated_meta()
+
+
+class DataPurifyMixin:
+    data_schema = None
+    query_params_schema = None
+
+    def get_purified_data(self, key=None, many=False):
+        schema = self.get_data_schema(key)
+        return purify(self.request.data, schema, many=many)
+
+    def get_data_schema(self, key=None):
+        if key in self.data_schema:
+            return self.data_schema[key]
+        return self.data_schema
+
+    def get_purified_query_params(self, key=None, many=False):
+        schema = self.get_query_params_schema(key)
+        return purify(self.get_query_params_dict(), schema, many=many)
+
+    def get_query_params_schema(self, key=None):
+        if key in self.query_params_schema:
+            return self.query_params_schema[key]
+        return self.query_params_schema
 
 
 class BaseDjackalAPIView(APIView):
@@ -292,11 +244,13 @@ class BaseDjackalAPIView(APIView):
 
         try:
             self.initial(request, *args, **kwargs)
+
             if request.method.lower() in self.http_method_names:
                 handler = getattr(self, request.method.lower(),
                                   self.http_method_not_allowed)
             else:
                 handler = self.http_method_not_allowed
+
             self.pre_method_call(request, *args, **kwargs)
             response = handler(request, *args, **kwargs)
             self.post_method_call(request, response, *args, **kwargs)
@@ -305,7 +259,6 @@ class BaseDjackalAPIView(APIView):
             response = self.handle_exception(exc)
 
         self.response = self.finalize_response(request, response, *args, **kwargs)
-
         return self.response
 
     def handle_exception(self, exc):
@@ -328,6 +281,15 @@ class BaseDjackalAPIView(APIView):
     def get_meta(self, **kwargs):
         return kwargs
 
+    def get_query_params_dict(self):
+        result = {}
+        for key, value in self.request.query_params.lists():
+            if len(value) == 1:
+                result[key] = value[0]
+            else:
+                result[key] = value
+        return result
+
     def simple_response(self, result=None, status=200, meta=None, headers=None, **kwargs):
         response_data = {}
 
@@ -342,20 +304,7 @@ class BaseDjackalAPIView(APIView):
         return Response(response_data, status=status, headers=headers, **kwargs)
 
 
-class DataPurifyMixin:
-    data_schema = None
-
-    def get_purified_data(self, key=None, many=False):
-        schema = self.get_data_schema(key)
-        return purify(self.request.data, schema, many=many)
-
-    def get_data_schema(self, key=None):
-        if key in self.data_schema:
-            return self.data_schema[key]
-        return self.data_schema
-
-
-class DjackalAPIView(BaseDjackalAPIView, FilterMixin, PageMixin, DataPurifyMixin):
+class DjackalAPIView(BaseDjackalAPIView, QueryFilterMixin, PageMixin, DataPurifyMixin):
     model = None
     queryset = None
 
@@ -383,9 +332,6 @@ class DjackalAPIView(BaseDjackalAPIView, FilterMixin, PageMixin, DataPurifyMixin
             'or override the get_model() method'.format(self.__class__.__name__)
         )
         return queryset.model
-
-    def get_request_data(self, key=None):
-        return self.get_purified_data(key)
 
     def get_serializer_class(self):
         return self.serializer_class
