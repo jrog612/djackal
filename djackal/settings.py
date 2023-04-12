@@ -3,8 +3,6 @@ from importlib import import_module
 from django.conf import settings
 from django.test.signals import setting_changed
 
-default_param_func = 'djackal.param_funcs.DefaultParamFunc'
-
 DEFAULTS = {
     'PAGE_SIZE': 10,
     'MAX_PAGE_SIZE': 100,
@@ -17,19 +15,12 @@ DEFAULTS = {
 
     'INITIALIZER': None,
 
-    'PARAM_FUNC_CLASSES': [
-        default_param_func,
-    ],
-
     'SINGLE_APP': False,
     'SINGLE_APP_NAME': None,
 }
 
 IMPORT_STRINGS = [
-    'PARAM_FUNC_CLASSES',
-
     'DEFAULT_PAGINATION_CLASS',
-
     'EXCEPTION_HANDLER',
 ]
 

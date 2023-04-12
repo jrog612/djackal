@@ -1,6 +1,6 @@
 from django.test import TestCase, override_settings
 
-from djackal.filters import DefaultFilterFunc
+from djackal.pagination import PageNumberPagination
 from djackal.settings import DjackalSettings, djackal_settings
 
 
@@ -24,5 +24,5 @@ class TestSettings(TestCase):
         assert djackal_settings.PAGE_SIZE is 10
 
     def test_str_import(self):
-        dq = djackal_settings.PARAM_FUNC_CLASSES[0]
-        assert dq is DefaultFilterFunc
+        pagination = djackal_settings.DEFAULT_PAGINATION_CLASS
+        assert pagination is PageNumberPagination
