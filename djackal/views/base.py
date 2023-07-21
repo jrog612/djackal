@@ -1,3 +1,5 @@
+from functools import cached_property
+
 from puty import purify
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -147,6 +149,10 @@ class DataPurifyMixin:
         schema = self.get_data_schema(key)
         return purify(self.request.data, schema, many=many)
 
+    @cached_property
+    def purified_data(self):
+        return self.get_purified_data()
+
     def get_data_schema(self, key=None):
         if key in self.data_schema:
             return self.data_schema[key]
@@ -155,6 +161,10 @@ class DataPurifyMixin:
     def get_purified_query_params(self, key=None, many=False):
         schema = self.get_query_params_schema(key)
         return purify(self.get_query_params_dict(), schema, many=many)
+
+    @cached_property
+    def purified_query_params(self):
+        return self.get_purified_query_params()
 
     def get_query_params_schema(self, key=None):
         if key in self.query_params_schema:
