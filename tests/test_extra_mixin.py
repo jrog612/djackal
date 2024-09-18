@@ -5,7 +5,7 @@ from djackal.model_mixins.extra_mixin import ExtraMixin
 from djackal.tests import DjackalTransactionTestCase
 
 
-class TestModel(ExtraMixin, models.Model):
+class TestModel1(ExtraMixin, models.Model):
     extra_fields = ('b_field1', 'b_field2')
     extra = JSONField(default=dict)
     field_char = models.CharField(max_length=150, null=True)
@@ -27,11 +27,11 @@ class TestModel3(ExtraMixin, models.Model):
 
 class BindMixinTest(DjackalTransactionTestCase):
     def test_bind_values(self):
-        tobj = TestModel()
+        tobj = TestModel1()
         tobj.b_field1 = 'test_b_field1'
         tobj.field_char = 'char_field'
         tobj.save()
-        tobj = TestModel.objects.get(id=tobj.id)
+        tobj = TestModel1.objects.get(id=tobj.id)
         self.assertEqual(tobj.b_field1, 'test_b_field1')
         self.assertEqual(tobj.extra, {'b_field1': 'test_b_field1'})
         self.assertIsNone(tobj.b_field2)
@@ -41,7 +41,7 @@ class BindMixinTest(DjackalTransactionTestCase):
 
         tobj.b_field2 = 'test_b_field2'
         tobj.save()
-        tobj = TestModel.objects.get(id=tobj.id)
+        tobj = TestModel1.objects.get(id=tobj.id)
         self.assertEqual(tobj.b_field2, 'test_b_field2')
         self.assertEqual(tobj.extra, {'b_field1': 'test_b_field1', 'b_field2': 'test_b_field2'})
 

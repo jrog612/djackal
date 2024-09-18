@@ -10,12 +10,12 @@ class TestSettings(TestCase):
 
     def test_import_error(self):
         settings = DjackalSettings({
-            'PARAM_FUNC_CLASSES': [
-                'tests.invalid.InvalidParamFunc'
+            'DEFAULT_PAGINATION_CLASS': [
+                'tests.invalid.PaginationClass'
             ]
         })
         with self.assertRaises(ImportError):
-            print(settings.PARAM_FUNC_CLASSES)
+            print(settings.DEFAULT_PAGINATION_CLASS)
 
     def test_override_settings(self):
         with override_settings(DJACKAL={'PAGE_SIZE': 20}):
