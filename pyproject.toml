@@ -15,7 +15,7 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.8"
 djangorestframework = "^3.0.0"
 puty = "^0.0"
 
