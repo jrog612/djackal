@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from djackal import query_filter
-from djackal.exceptions import NotFound
 from djackal.settings import djackal_settings
 from djackal.utils import value_mapper
 
@@ -111,7 +110,7 @@ class QueryFilterMixin:
 
         obj = queryset.first()
         if obj is None:
-            raise NotFound(model=queryset.model)
+            return None
         self.check_object_permissions(request=self.request, obj=obj)
         return obj
 
