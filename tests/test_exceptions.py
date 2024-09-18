@@ -1,51 +1,83 @@
 import http
 import random
+import string
 
 from rest_framework.test import APIRequestFactory
 
-from djackal.erra import Erra
-from djackal.exceptions import DjackalAPIException, NotFound, Forbidden, BadRequest, InternalServer, ErraException, \
+from djackal.exceptions import APIException, NotFound, Forbidden, BadRequest, InternalServer, \
     Unauthorized, NotAllowed
 from djackal.tests import DjackalAPITestCase
 from djackal.views.base import DjackalAPIView
-
-
-class TestErra(Erra):
-    TEST_ERRA = 'test_erra_message'
-
 
 TEST_BAD_REQUEST_CODE = 'TEST_BAD_REQUEST'
 TEST_UNAUTHORIZED_CODE = 'TEST_UNAUTHORIZED'
 TEST_FORBIDDEN_CODE = 'TEST_FORBIDDEN'
 TEST_NOT_ALLOWED_CODE = 'TEST_NOT_ALLOWED'
 TEST_INTERNAL_SERVER_CODE = 'TEST_INTERNAL_SERVER'
+TEST_NOT_FOUND = 'NOT_FOUND'
 
 factory = APIRequestFactory()
 
 
-class TestException(DjackalAPIException):
+class TestException(APIException):
     default_status_code = 501
 
 
 class ExceptionAPI(DjackalAPIView):
     def post(self, request):
-        kind = request.data['kind']
+        kind = request.data.get('kind')
         status_code = request.data.get('status_code')
+        message = request.data.get('message')
+        code = request.data.get('code')
 
         if kind == 'NotFound':
-            raise NotFound(test=True)
+            raise NotFound(
+                message=message,
+                test=True,
+                code=TEST_NOT_FOUND,
+                status_code=status_code,
+            )
         elif kind == 'BadRequest':
-            raise BadRequest(code=TEST_BAD_REQUEST_CODE, test=True)
+            raise BadRequest(
+                message=message,
+                code=code or TEST_BAD_REQUEST_CODE,
+                test=True,
+                status_code=status_code,
+            )
         elif kind == 'Unauthorized':
-            raise Unauthorized(code=TEST_UNAUTHORIZED_CODE, test=True)
+            raise Unauthorized(
+                message=message,
+                code=code or TEST_UNAUTHORIZED_CODE,
+                test=True,
+                status_code=status_code,
+            )
         elif kind == 'Forbidden':
-            raise Forbidden(code=TEST_FORBIDDEN_CODE, test=True)
+            raise Forbidden(
+                message=message,
+                code=code or TEST_FORBIDDEN_CODE,
+                test=True,
+                status_code=status_code,
+            )
         elif kind == 'NotAllowed':
-            raise NotAllowed(code=TEST_NOT_ALLOWED_CODE, test=True)
+            raise NotAllowed(
+                message=message,
+                code=code or TEST_NOT_ALLOWED_CODE,
+                test=True
+            )
         elif kind == 'InternalServer':
-            raise InternalServer(code=TEST_INTERNAL_SERVER_CODE, test=True)
-        elif kind == 'Erra':
-            raise ErraException(erra=TestErra.TEST_ERRA, test=True, status_code=status_code)
+            raise InternalServer(
+                message=message,
+                code=code or TEST_INTERNAL_SERVER_CODE,
+                test=True,
+                status_code=status_code
+            )
+        else:
+            raise APIException(
+                message=message,
+                code=code,
+                test=True,
+                status_code=status_code,
+            )
 
     def get(self, request):
         raise TestException()
@@ -82,20 +114,26 @@ class ExceptionTest(DjackalAPITestCase):
         self._check_sub_erra_exception('Forbidden', TEST_FORBIDDEN_CODE, 403)
         self._check_sub_erra_exception('NotAllowed', TEST_NOT_ALLOWED_CODE, 405)
 
-        request = factory.post('/', {'kind': 'Erra'})
+        random_code = random.randint(100, 999)
+        random_message = ''.join(random.choices(string.ascii_letters + string.digits + ' ', k=random.randint(12, 20)))
+
+        request = factory.post('/', {
+            'code': random_code,
+            'message': random_message,
+        })
         response = self.view(request)
         self.assertStatusCode(500, response)
         result = response.data
         self.assertEqual(result['test'], True)
-        self.assertEqual(result['code'], TestErra.TEST_ERRA.code)
-        self.assertEqual(result['message'], TestErra.TEST_ERRA.message)
+        self.assertEqual(result['code'], str(random_code))
+        self.assertEqual(result['message'], random_message)
 
     def test_exception_status_code(self):
-        request = factory.post('/', {'kind': 'Erra'})
+        request = factory.post('/')
         response = self.view(request)
         self.assertStatusCode(500, response)
-        code = random.choice(list(http.HTTPStatus))
 
-        request = factory.post('/', {'kind': 'Erra', 'status_code': code.value})
+        code = random.choice(list(http.HTTPStatus))
+        request = factory.post('/', {'status_code': code.value})
         response = self.view(request)
         self.assertStatusCode(code.value, response)

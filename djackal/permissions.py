@@ -10,18 +10,14 @@ PUT = 'PUT'
 DELETE = 'DELETE'
 
 
-class ErraPermission(permissions.BasePermission):
+class BasePermission(permissions.BasePermission):
     hard = False
-    erra = None
-    status_code = 403
-    code = None
     message = None
+    code = None
+    status_code = 403
 
     def get_message(self, request, view, obj=None):
         return self.message
-
-    def get_erra(self, request, view, obj=None):
-        return self.erra
 
     def get_status_code(self, request, view, obj=None):
         return self.status_code
@@ -32,9 +28,8 @@ class ErraPermission(permissions.BasePermission):
     def raise_error(self, request, view, obj=None):
         raise PermissionException(
             permission=self,
-            erra=self.get_erra(request, view, obj),
-            code=self.get_code(request, view, obj),
             message=self.get_message(request, view, obj),
+            code=self.get_code(request, view, obj),
             status_code=self.get_status_code(request, view, obj)
         )
 
@@ -69,7 +64,7 @@ class ErraPermission(permissions.BasePermission):
             return False
 
 
-class _MethodPermission(ErraPermission):
+class _MethodPermission(BasePermission):
     allow_method = None
 
     def handle(self, request, view):

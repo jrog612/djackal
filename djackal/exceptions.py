@@ -1,96 +1,87 @@
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException as _APIException
+from rest_framework.response import Response
+from rest_framework.views import exception_handler as drf_exception_handler
 
 
-class DjackalAPIException(APIException):
-    default_message = ''
+class APIException(_APIException):
+    default_message = None
+    default_code = None
     default_status_code = 500
 
-    def __init__(self, message=None, status_code=None):
+    def __init__(self, message=None, code=None, status_code=None, **kwargs):
         self.message = message
-        self.status_code = status_code or self.default_status_code
+        self.code = code
+        self.status_code = status_code
+        self.kwargs = kwargs
 
     def __str__(self):
         return self.message
 
     def response_data(self):
-        return {}
-
-    def get_status_code(self):
-        return getattr(self, 'status_code', self.default_status_code)
-
-
-class ErraException(DjackalAPIException):
-    default_status_code = 500
-
-    def __init__(self, erra=None, code=None, message=None, context=None, status_code=None, **kwargs):
-        self.erra = erra
-        self.message = message
-        self.code = code
-        self.context = context
-        self.kwargs = kwargs
-        self.status_code = status_code or self.default_status_code
-
-    def __str__(self):
-        return self.get_message()
+        result = {
+            'message': self.get_message(),
+            **self.kwargs,
+        }
+        code = self.get_code()
+        if code is not None:
+            result['code'] = code
+        return result
 
     def get_message(self):
-        if self.message:
-            return self.message
-        elif self.erra:
-            return self.erra.message
-        return None
+        return self.message or self.default_message
 
-    def response_data(self):
-        if self.erra:
-            response = self.erra.response_data(context=self.context)
-        else:
-            response = {'code': self.code, 'message': self.message}
-        response.update(self.kwargs)
-        return response
+    def get_code(self):
+        return self.code or self.default_code
+
+    def get_status_code(self):
+        return self.status_code or self.default_status_code
 
 
-class NotFound(DjackalAPIException):
+class NotFound(APIException):
     default_status_code = 404
-    default_message = 'Data not found'
-
-    def __init__(self, message=None, context=None, model=None, status_code=None, **kwargs):
-        self.context = context
-        self.kwargs = kwargs
-        self.model = model
-        self.message = message or self.default_message
-        self.status_code = status_code or self.default_status_code
-
-    def response_data(self):
-        return {
-            'code': 'NOT_FOUND',
-            'message': self.message,
-            **self.kwargs
-        }
+    default_message = 'not found'
 
 
-class BadRequest(ErraException):
+class BadRequest(APIException):
     default_status_code = 400
+    default_message = 'bad request'
 
 
-class Unauthorized(ErraException):
+class Unauthorized(APIException):
     default_status_code = 401
+    default_message = 'unauthorized'
 
 
-class Forbidden(ErraException):
+class Forbidden(APIException):
     default_status_code = 403
+    default_message = 'forbidden'
 
 
-class NotAllowed(ErraException):
+class NotAllowed(APIException):
     default_status_code = 405
+    default_message = 'not allowed'
 
 
-class InternalServer(ErraException):
+class InternalServer(APIException):
     default_status_code = 500
+    default_message = 'internal server error'
 
 
-class PermissionException(ErraException):
+class PermissionException(APIException):
     default_status_code = 403
+    default_message = 'permission denied'
 
-    def __init__(self, permission, erra=None, code=None, message=None, context=None, status_code=None, **kwargs):
-        super().__init__(erra=erra, code=code, message=message, context=context, status_code=status_code, **kwargs)
+    def __init__(self, permission, message=None, code=None, status_code=None, **kwargs):
+        super().__init__(
+            message=message,
+            code=code,
+            status_code=status_code,
+            **kwargs
+        )
         self.permission = permission
+
+
+def exception_handler(exc, context):
+    if isinstance(exc, APIException):
+        return Response(exc.response_data(), status=exc.get_status_code())
+    return drf_exception_handler(exc, context)
