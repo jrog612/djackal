@@ -2,7 +2,6 @@ from django.apps import apps
 from django.db.models import Q, Model
 from django.shortcuts import _get_queryset
 
-from djackal.exceptions import NotFound
 from djackal.settings import djackal_settings
 
 
@@ -16,13 +15,6 @@ def get_object_or_None(klass, *args, **kwargs):
 
 def get_object_or(klass, this=None, *args, **kwargs):
     return get_object_or_None(klass, *args, **kwargs) or this
-
-
-def get_object_or_404(model, **fields):
-    obj = get_object_or_None(model, **fields)
-    if obj is None:
-        raise NotFound(model=model)
-    return obj
 
 
 def model_update(instance, commit=True, **fields):
